@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "1.9.0"
+    antlr
     application
 }
 
@@ -11,6 +12,7 @@ repositories {
 }
 
 dependencies {
+    antlr("org.antlr:antlr4:4.13.1")
     testImplementation(kotlin("test"))
 }
 
