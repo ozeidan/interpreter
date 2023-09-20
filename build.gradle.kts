@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm") version "1.9.0"
     antlr
@@ -14,6 +16,14 @@ repositories {
 dependencies {
     antlr("org.antlr:antlr4:4.13.1")
     testImplementation(kotlin("test"))
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    dependsOn(tasks.withType<AntlrTask>())
+}
+
+tasks.withType<Jar>().configureEach {
+    dependsOn(tasks.withType<AntlrTask>())
 }
 
 tasks.test {
