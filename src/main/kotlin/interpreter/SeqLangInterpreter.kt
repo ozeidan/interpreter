@@ -15,7 +15,7 @@ class SeqLangInterpreter(writer: Writer = OutputStreamWriter(System.out)) {
      * consecutively to interpret more statements while preserving the program context (variable assignments) from
      * previous calls.
      *
-     * @throws InterpreterException, which stores the line number on which the error occurred. When the exception is
+     * @throws SeqLangException, which stores the line number on which the error occurred. When the exception is
      * thrown on a consecutive call, the line number will be relative to all statements that were passed to the interpreter.
      */
     fun interpret(statements: String) {

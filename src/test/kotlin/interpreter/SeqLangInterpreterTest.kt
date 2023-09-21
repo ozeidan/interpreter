@@ -137,7 +137,7 @@ class SeqLangInterpreterTest {
     }
 
     private fun assertThrows(program: String, errorOnLineNumber : Int) {
-        val exception = assertThrows<InterpreterException> { toTest.interpret(program) }
+        val exception = assertThrows<SeqLangException> { toTest.interpret(program) }
         assertEquals(errorOnLineNumber, exception.lineNumber)
     }
 }
