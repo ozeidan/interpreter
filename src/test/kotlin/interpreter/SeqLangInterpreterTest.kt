@@ -1,7 +1,9 @@
 package interpreter
 
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import java.io.CharArrayWriter
 import kotlin.test.assertEquals
@@ -17,7 +19,7 @@ class SeqLangInterpreterTest {
     }
 
     @Test
-    fun shouldWriteOutputCorrectly() {
+    fun shouldCalculatePiCorrectly() {
         val piProgram = """
             var n = 500
             var seq = map({0, n}, i -> (-1)^i / (2 * i + 1))
@@ -30,14 +32,53 @@ class SeqLangInterpreterTest {
     }
 
     @Test
-    fun shouldFormatSequenceCorrectly() {
+    @Disabled
+    fun shouldEvaluateLargeSequences() {
         val piProgram = """
+            var n = 50000000
+            var seq = map({0, n}, i -> (-1)^i / (2 * i + 1))
+            var pi = 4 * reduce(seq, 0, x y -> x + y)
+            print "pi = "
+            out pi
+        """.trimIndent()
+        toTest.interpret(piProgram)
+    }
+
+    @Test
+    fun shouldApplyOperatorsInCorrectOrder() {
+        val program = "out 2 * 4 + 3 ^ 2 / 5"
+
+        assertProgramOutput(program, "12.5")
+    }
+
+    @Test
+    fun shouldShadowCorrectly() {
+        val piProgram = """
+            var a = 1
+            var a = 2
+            out a
+        """.trimIndent()
+
+        assertProgramOutput(piProgram, "2.0")
+    }
+
+    @Test
+    fun shouldFormatSequenceCorrectly() {
+        val program = """
             var seq = {1, 4}
             var mapped = map(seq, n -> n ^ 2)
             out mapped
         """.trimIndent()
 
-        assertProgramOutput(piProgram, "{ 1, 4, 9, 16 }")
+        assertProgramOutput(program, "{ 1.0, 4.0, 9.0, 16.0 }")
+    }
+
+    @Test
+    fun shouldKeepProgramContextBetweenInvocations() {
+        val firstStatement = "var a = 5"
+        val secondStatement = "out a"
+        assertProgramOutput(firstStatement, "")
+        assertProgramOutput(secondStatement, "5.0")
     }
 
     private fun assertProgramOutput(program: String, output: String) {
@@ -134,6 +175,14 @@ class SeqLangInterpreterTest {
             """.trimIndent(),
             4
         )
+    }
+
+    @Test
+    fun shouldReportCorrectLineNumberOnConsecutiveInvocations() {
+        val correctStatement = "var n = 1"
+        val erroneousStatement = "out b"
+        assertDoesNotThrow { toTest.interpret(correctStatement) }
+        assertThrows(erroneousStatement, 2)
     }
 
     private fun assertThrows(program: String, errorOnLineNumber : Int) {
