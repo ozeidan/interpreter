@@ -51,7 +51,7 @@ class SeqLangInterpreterTest {
             """
             var n = a
             """.trimIndent(),
-            0
+            1
         )
     }
 
@@ -61,7 +61,7 @@ class SeqLangInterpreterTest {
             """
             out 1 / 0
             """.trimIndent(),
-            0
+            1
         )
     }
 
@@ -74,7 +74,7 @@ class SeqLangInterpreterTest {
             var second = {0, 6}
             out first + second
             """.trimIndent(),
-            2
+            3
         )
     }
 
@@ -86,7 +86,7 @@ class SeqLangInterpreterTest {
             var second = {0, 6} + b
             out first + second
             """.trimIndent(),
-            1
+            2
         )
     }
 
@@ -97,7 +97,7 @@ class SeqLangInterpreterTest {
             var n = 3
             out map(n, x -> x + 1)
             """.trimIndent(),
-            1
+            2
         )
     }
 
@@ -108,7 +108,7 @@ class SeqLangInterpreterTest {
             var n = {0, 5}
             out reduce({5, 7}, n, x y -> x * y)
             """.trimIndent(),
-            1
+            2
         )
     }
 
@@ -118,7 +118,7 @@ class SeqLangInterpreterTest {
             """
             out {0 5}
             """.trimIndent(),
-            0
+            1
         )
     }
 
@@ -132,7 +132,7 @@ class SeqLangInterpreterTest {
             print "pi = ";
             out pi
             """.trimIndent(),
-            3
+            4
         )
     }
 
