@@ -5,5 +5,15 @@ enum class BinaryOperator {
     SUBTRACTION,
     MULTIPLICATION,
     DIVISION,
-    POWER
+    POWER;
+
+    override fun toString(): String {
+        return when (this) {
+            ADDITION -> "+"
+            SUBTRACTION -> "-"
+            MULTIPLICATION -> "*"
+            DIVISION -> "/"
+            POWER -> "^"
+        }
+    }
 }

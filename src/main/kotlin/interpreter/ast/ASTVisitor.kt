@@ -13,7 +13,7 @@ interface ASTVisitor<T> {
         return node.visit(this, context)
     }
 
-    private fun visitChildren(node: ASTNode, context: T) : T {
+    fun visitChildren(node: ASTNode, context: T) : T {
         return node.getChildren().fold(context) { c, n -> n.visit(this, c) }
     }
 

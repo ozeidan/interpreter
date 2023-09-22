@@ -123,9 +123,8 @@ class SeqLangInterpreterTest {
     fun shouldThrowWhenSubtractingScalarFromSequence() {
         assertThrows(
             """
-            var b = reduce({1, 4}, 0, x y -> x + y)
-            var second = {0, 6} + b
-            out first + second
+            var scalar = reduce({1, 4}, 0, x y -> x + y)
+            var shouldntCompute = {0, 6} + scalar
             """.trimIndent(),
             2
         )
