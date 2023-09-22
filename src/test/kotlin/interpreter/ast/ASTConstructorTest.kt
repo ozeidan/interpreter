@@ -7,8 +7,8 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
-class ASTConstructingVisitorTest {
-    private var toTest = ASTConstructingVisitor()
+class ASTConstructorTest {
+    private var toTest = ASTConstructor()
 
     @Test
     fun shouldConstructASTCorrectly() {
@@ -70,6 +70,6 @@ class ASTConstructingVisitorTest {
         val tokens = CommonTokenStream(lexer)
         val parser = SeqLangParser(tokens)
         val tree = parser.program()
-        assertEquals(expected, toTest.visit(tree))
+        assertEquals(expected, toTest.constructAST(tree))
     }
 }

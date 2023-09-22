@@ -2,15 +2,29 @@ package interpreter.ast
 
 import SeqLangBaseVisitor
 
-/*
-Visitor on the SeqLang parse tree that constructs an AST of type ASTNode. The AST is structurally more suited for
+/**
+Class that constructs an AST of type ASTNode from a SeqLang parse tree. The AST is structurally more suited for
 semantic analysis and execution of the program, as it directly represents the semantics of the program without
 storing unneeded intermediate nodes which are artefacts of parsing.
+*/
+class ASTConstructor {
+    private val programNodeConstructingVisitor = ProgramNodeConstructingVisitor()
 
-The visitor's implementation is split into multiple classes, each corresponding to a concrete AST node type.
-This is done to avoid casting.
- */
-class ASTConstructingVisitor : SeqLangBaseVisitor<ASTNode>()  {
+    /**
+     * Constructs a SeqLang AST.
+     *
+     * @param ctx: SeqLang parse tree of a program, generated from the ANTLR-generated parser.
+     * @return SeqLang AST of the program.
+     */
+    fun constructAST(ctx: SeqLangParser.ProgramContext): ASTNode {
+        return programNodeConstructingVisitor.visitProgram(ctx)
+    }
+}
+
+
+// The visitor's implementation is split into multiple classes, each corresponding to a concrete AST node type.
+// This is done to avoid casting.
+private class ProgramNodeConstructingVisitor : SeqLangBaseVisitor<ASTNode>()  {
     private val statementNodeConstructingVisitor = StatementNodeConstructingVisitor()
 
     override fun visitProgram(ctx: SeqLangParser.ProgramContext): ASTNode {
