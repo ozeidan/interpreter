@@ -8,14 +8,14 @@ import org.junit.jupiter.api.assertThrows
 import java.io.CharArrayWriter
 import kotlin.test.assertEquals
 
-class SeqLangInterpreterTest {
+class InterpreterTest {
     private lateinit var charArrayWriter : CharArrayWriter
-    private lateinit var toTest : SeqLangInterpreter
+    private lateinit var toTest : Interpreter
 
     @BeforeEach
     fun setup() {
         charArrayWriter = CharArrayWriter()
-        toTest = SeqLangInterpreter(charArrayWriter)
+        toTest = Interpreter(charArrayWriter)
     }
 
     @Test
@@ -28,7 +28,7 @@ class SeqLangInterpreterTest {
             out pi
         """.trimIndent()
 
-        assertProgramOutput(piProgram, "3.143588659585788")
+        assertProgramOutput(piProgram, "pi = 3.143588659585788")
     }
 
     @Test
@@ -48,7 +48,7 @@ class SeqLangInterpreterTest {
     fun shouldApplyOperatorsInCorrectOrder() {
         val program = "out 2 * 4 + 3 ^ 2 / 5"
 
-        assertProgramOutput(program, "12.5")
+        assertProgramOutput(program, "9.8")
     }
 
     @Test
@@ -101,6 +101,23 @@ class SeqLangInterpreterTest {
         assertThrows(
             """
             out 1 / 0
+            """.trimIndent(),
+            1
+        )
+    }
+
+    @Test
+    fun shouldThrowWhenSequenceExpressionIsInvalid() {
+        assertThrows(
+            """
+            out {4, 3}
+            """.trimIndent(),
+            1
+        )
+
+        assertThrows(
+            """
+            out {4, 4 - 1}
             """.trimIndent(),
             1
         )

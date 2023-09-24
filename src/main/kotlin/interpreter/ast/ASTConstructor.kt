@@ -16,7 +16,7 @@ class ASTConstructor {
      * @param ctx: SeqLang parse tree of a program, generated from the ANTLR-generated parser.
      * @return SeqLang AST of the program.
      */
-    fun constructAST(ctx: SeqLangParser.ProgramContext): ASTNode {
+    fun constructAST(ctx: SeqLangParser.ProgramContext): ProgramNode {
         return programNodeConstructingVisitor.visitProgram(ctx)
     }
 }
@@ -27,7 +27,7 @@ class ASTConstructor {
 private class ProgramNodeConstructingVisitor : SeqLangBaseVisitor<ASTNode>()  {
     private val statementNodeConstructingVisitor = StatementNodeConstructingVisitor()
 
-    override fun visitProgram(ctx: SeqLangParser.ProgramContext): ASTNode {
+    override fun visitProgram(ctx: SeqLangParser.ProgramContext): ProgramNode {
         return ProgramNode(ctx.stmt().map(statementNodeConstructingVisitor::visit))
     }
 }

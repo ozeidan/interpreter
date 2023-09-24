@@ -8,21 +8,12 @@ import interpreter.ast.*
 class SemanticAnalyzer {
     private val typeCheckingASTVisitor = TypeCheckingASTVisitor()
 
-    fun analyze(ast: ASTNode) {
-        typeCheckingASTVisitor.visit(ast, TypeCheckingContext(mapOf(), null))
+    fun analyze(ast: ASTNode, symbolTable: Map<String, Type> = mapOf()) : Map<String, Type> {
+        return typeCheckingASTVisitor.visit(ast, TypeCheckingContext(symbolTable, null)).symbolTable
     }
 }
 
-private fun <T> addLineNumberToExceptions(statementNode: StatementNode, function: () -> T) : T {
-    // TODO: better abstraction for this
-    try {
-        return function()
-    } catch (e: Exception) {
-        throw SeqLangException(e.message ?: "", statementNode.linenumber)
-    }
-}
-
-private enum class Type {
+enum class Type {
     NUMBER,
     SEQUENCE
 }
