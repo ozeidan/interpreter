@@ -284,8 +284,59 @@ class InterpreterTest {
         assertThrows(erroneousStatement, 2)
     }
 
+    @Test
+    fun shouldCrashWhenAccessingGlobalVariableInLambda() {
+        val program = """
+            var notAccessible = 3
+            var a = {1, 4}
+            out map(a, x -> notAccessible + x)
+        """.trimIndent()
+
+        assertThrows(program, 3)
+    }
+
+    @Test
+    fun shouldCrashWhenAccessingGlobalVariableInReducingLambda() {
+        val program = """
+            var notAccessible = 3
+            var a = {1, 4}
+            out reduce(a, 1.0, x y -> notAccessible + x + y)
+        """.trimIndent()
+
+        assertThrows(program, 3)
+    }
+
+    @Test
+    fun shouldntUpdateScopeWhenExecutionCrashes() {
+        val erroneousStatments = """
+            var a = 1
+            invalid
+        """.trimIndent()
+
+        assertThrows(erroneousStatments, 2)
+
+        val accessingStatements = """
+            out a
+        """.trimIndent()
+
+        assertThrows(accessingStatements, 1)
+    }
+
     private fun assertThrows(program: String, errorOnLineNumber : Int) {
         val exception = assertThrows<SeqLangException> { toTest.interpret(program) }
         assertEquals(errorOnLineNumber, exception.lineNumber)
     }
+
+
+    @Test
+    fun shouldntCrashWhenComputingSequenceTwice() {
+        val program = """
+            var a = {1, 4}
+            out a
+            out a
+        """.trimIndent()
+
+        toTest.interpret(program)
+    }
+
 }
