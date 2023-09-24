@@ -18,6 +18,11 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+tasks.generateGrammarSource {
+    arguments = arguments + listOf("-visitor")
+}
+
+
 tasks.withType<KotlinCompile>().configureEach {
     dependsOn(tasks.withType<AntlrTask>())
 }
