@@ -59,7 +59,7 @@ class InterpreterTest {
             out a
         """.trimIndent()
 
-        assertProgramOutput(piProgram, "2.0")
+        assertProgramOutput(piProgram, "2")
     }
 
     @Test
@@ -70,7 +70,7 @@ class InterpreterTest {
             out mapped
         """.trimIndent()
 
-        assertProgramOutput(program, "{ 1.0, 4.0, 9.0, 16.0 }")
+        assertProgramOutput(program, "{ 1, 4, 9, 16 }")
     }
 
     @Test
@@ -78,7 +78,7 @@ class InterpreterTest {
         val firstStatement = "var a = 5"
         val secondStatement = "out a"
         assertProgramOutput(firstStatement, "")
-        assertProgramOutput(secondStatement, "5.0")
+        assertProgramOutput(secondStatement, "5")
     }
 
     private fun assertProgramOutput(program: String, output: String) {
