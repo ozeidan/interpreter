@@ -74,12 +74,75 @@ class InterpreterTest {
     }
 
     @Test
+    fun shouldConvertSequenceToFloat() {
+
+        val program = """
+            var seq = {1, 4}
+            var mapped = map(seq, n -> n ^ 2 / 2.0)
+            out mapped
+        """.trimIndent()
+
+        assertProgramOutput(program, "{ 0.5, 2, 4.5, 8 }")
+    }
+
+    @Test
+    fun shouldComputeFloatWhenAddingIntegerAndFloat() {
+
+        val program = """
+            out 2 + 3.0
+        """.trimIndent()
+
+        assertProgramOutput(program, "5.0")
+    }
+
+    @Test
+    fun shouldComputeIntegerWhenDividingIntegerAndInteger() {
+
+        val program = """
+            out 3 / 2
+        """.trimIndent()
+
+        assertProgramOutput(program, "1")
+    }
+
+    @Test
+    fun shouldComputeFloatWhenMultiplyingFloatAndFloat() {
+
+        val program = """
+            out 3.0 * 2.0
+        """.trimIndent()
+
+        assertProgramOutput(program, "6.0")
+    }
+
+    @Test
     fun shouldKeepProgramContextBetweenInvocations() {
         val firstStatement = "var a = 5"
         val secondStatement = "out a"
         assertProgramOutput(firstStatement, "")
         assertProgramOutput(secondStatement, "5")
     }
+
+    @Test
+    fun shouldFormatFloatProperly() {
+
+        val program = """
+            out 3.0
+        """.trimIndent()
+
+        assertProgramOutput(program, "3.0")
+    }
+
+    @Test
+    fun shouldFormatIntegerProperly() {
+
+        val program = """
+            out 3
+        """.trimIndent()
+
+        assertProgramOutput(program, "3")
+    }
+
 
     private fun assertProgramOutput(program: String, output: String) {
         toTest.interpret(program)
@@ -144,6 +207,26 @@ class InterpreterTest {
             var shouldntCompute = {0, 6} + scalar
             """.trimIndent(),
             2
+        )
+    }
+
+    @Test
+    fun shouldThrowWhenSequenceBoundaryIsSequence() {
+        assertThrows(
+            """
+            out {{1, 2}, 3}
+            """.trimIndent(),
+            1
+        )
+    }
+
+    @Test
+    fun shouldThrowWhenSequenceBoundaryIsFloatingPoint() {
+        assertThrows(
+            """
+            out {1, 3.0}
+            """.trimIndent(),
+            1
         )
     }
 
