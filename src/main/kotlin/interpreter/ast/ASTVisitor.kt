@@ -56,7 +56,7 @@ interface ASTVisitor<T> {
         return visitChildren(reducingNode, context)
     }
 
-    fun onSequenceLiteralNodeVisited(sequenceLiteralNode: SequenceLiteralNode, context: T) : T {
-        return visitChildren(sequenceLiteralNode, context)
+    fun onSequenceNodeVisited(sequenceNode: SequenceNode, context: T) : T {
+        return visitChildren(sequenceNode, context)
     }
 }

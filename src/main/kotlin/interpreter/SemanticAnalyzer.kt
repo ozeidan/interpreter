@@ -75,9 +75,9 @@ private class TypeCheckingASTVisitor() : ASTVisitor<TypeCheckingContext> {
         }
     }
 
-    override fun onSequenceLiteralNodeVisited(sequenceLiteralNode: SequenceLiteralNode, context: TypeCheckingContext): TypeCheckingContext {
-        val lowerBoundType = visit(sequenceLiteralNode.lowerBoundInclusive, context).evaluatedType
-        val upperBoundType = visit(sequenceLiteralNode.upperBoundInclusive, context).evaluatedType
+    override fun onSequenceNodeVisited(sequenceNode: SequenceNode, context: TypeCheckingContext): TypeCheckingContext {
+        val lowerBoundType = visit(sequenceNode.lowerBoundInclusive, context).evaluatedType
+        val upperBoundType = visit(sequenceNode.upperBoundInclusive, context).evaluatedType
 
         if (lowerBoundType != Type.INTEGER) {
             throw InterpreterException("invalid usage of expression of type $lowerBoundType as lower sequence bound")

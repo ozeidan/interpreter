@@ -28,10 +28,10 @@ class DefaultASTVisitorTest {
         ),
         VariableDeclarationNode(2, "x",
             MappingNode(
-                SequenceLiteralNode(FloatLiteralNode(5.0), FloatLiteralNode(3.0)),
+                SequenceNode(FloatLiteralNode(5.0), FloatLiteralNode(3.0)),
                 UnaryLambda("i",
                     ReducingNode(
-                        SequenceLiteralNode(FloatLiteralNode(1.0), FloatLiteralNode(7.0)),
+                        SequenceNode(FloatLiteralNode(1.0), FloatLiteralNode(7.0)),
                         FloatLiteralNode(1.0),
                         BinaryLambda("a", "b", FloatLiteralNode(3.0))
             ))

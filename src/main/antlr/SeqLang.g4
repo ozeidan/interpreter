@@ -32,7 +32,7 @@ powerExpr
 baseExpr
     : '(' expr ')'            # ParenthesizedExpr
     | IDENT                   # Identifier
-    | '{' expr ',' expr '}'   # SequenceLiteral
+    | '{' expr ',' expr '}'   # Sequence
     | INTEGER                 # IntegerLiteral
     | FLOAT                   # FloatLiteral
     | 'map' '(' expr ',' IDENT '->' expr ')' # Mapping

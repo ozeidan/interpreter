@@ -23,7 +23,7 @@ class ASTConstructorTest {
         val expectedAST = ProgramNode(listOf(
             VariableDeclarationNode(1, "n", FloatLiteralNode(500.0)),
             VariableDeclarationNode(2, "seq",
-                MappingNode(SequenceLiteralNode(FloatLiteralNode(0.0), VariableAccessNode("n")),
+                MappingNode(SequenceNode(FloatLiteralNode(0.0), VariableAccessNode("n")),
                     UnaryLambda("i", BinOpNode(BinaryOperator.ADDITION, VariableAccessNode("i"),
                         FloatLiteralNode(1.0))))),
             VariableDeclarationNode(3, "someval",
