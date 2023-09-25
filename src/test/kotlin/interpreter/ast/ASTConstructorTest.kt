@@ -21,14 +21,14 @@ class ASTConstructorTest {
         """.trimIndent()
 
         val expectedAST = ProgramNode(listOf(
-            VariableDeclarationNode(1, "n", FloatLiteralNode(500.0)),
+            VariableDeclarationNode(1, "n", IntegerLiteralNode(500)),
             VariableDeclarationNode(2, "seq",
-                MappingNode(SequenceNode(FloatLiteralNode(0.0), VariableAccessNode("n")),
+                MappingNode(SequenceNode(IntegerLiteralNode(0), VariableAccessNode("n")),
                     UnaryLambda("i", BinOpNode(BinaryOperator.ADDITION, VariableAccessNode("i"),
-                        FloatLiteralNode(1.0))))),
+                        IntegerLiteralNode(1))))),
             VariableDeclarationNode(3, "someval",
-                BinOpNode(BinaryOperator.MULTIPLICATION, FloatLiteralNode(4.0),
-                    ReducingNode(VariableAccessNode("seq"), FloatLiteralNode(0.0),
+                BinOpNode(BinaryOperator.MULTIPLICATION, IntegerLiteralNode(4),
+                    ReducingNode(VariableAccessNode("seq"), IntegerLiteralNode(0),
                         BinaryLambda("x", "y",
                             BinOpNode(BinaryOperator.ADDITION, VariableAccessNode("x"), VariableAccessNode("y")))
                     ))),
@@ -47,18 +47,18 @@ class ASTConstructorTest {
                 BinaryOperator.ADDITION,
                 BinOpNode(
                     BinaryOperator.ADDITION,
-                    FloatLiteralNode(2.0),
+                    IntegerLiteralNode(2),
                     BinOpNode(
                         BinaryOperator.MULTIPLICATION,
-                        FloatLiteralNode(3.0),
+                        IntegerLiteralNode(3),
                         BinOpNode(
                             BinaryOperator.POWER,
-                            FloatLiteralNode(4.0),
-                            FloatLiteralNode(2.0)
+                            IntegerLiteralNode(4),
+                            IntegerLiteralNode(2)
                         )
                     )
                 ),
-                FloatLiteralNode(7.0)
+                IntegerLiteralNode(7)
         ))))
 
         assertGeneratesAST(testProgram, expectedAST)
