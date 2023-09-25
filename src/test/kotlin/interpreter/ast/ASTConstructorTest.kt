@@ -21,14 +21,14 @@ class ASTConstructorTest {
         """.trimIndent()
 
         val expectedAST = ProgramNode(listOf(
-            VariableDeclarationNode(1, "n", NumberLiteralNode(500.0)),
+            VariableDeclarationNode(1, "n", FloatLiteralNode(500.0)),
             VariableDeclarationNode(2, "seq",
-                MappingNode(SequenceNode(NumberLiteralNode(0.0), VariableAccessNode("n")),
+                MappingNode(SequenceLiteralNode(FloatLiteralNode(0.0), VariableAccessNode("n")),
                     UnaryLambda("i", BinOpNode(BinaryOperator.ADDITION, VariableAccessNode("i"),
-                        NumberLiteralNode(1.0))))),
+                        FloatLiteralNode(1.0))))),
             VariableDeclarationNode(3, "someval",
-                BinOpNode(BinaryOperator.MULTIPLICATION, NumberLiteralNode(4.0),
-                    ReducingNode(VariableAccessNode("seq"), NumberLiteralNode(0.0),
+                BinOpNode(BinaryOperator.MULTIPLICATION, FloatLiteralNode(4.0),
+                    ReducingNode(VariableAccessNode("seq"), FloatLiteralNode(0.0),
                         BinaryLambda("x", "y",
                             BinOpNode(BinaryOperator.ADDITION, VariableAccessNode("x"), VariableAccessNode("y")))
                     ))),
@@ -47,19 +47,33 @@ class ASTConstructorTest {
                 BinaryOperator.ADDITION,
                 BinOpNode(
                     BinaryOperator.ADDITION,
-                    NumberLiteralNode(2.0),
+                    FloatLiteralNode(2.0),
                     BinOpNode(
                         BinaryOperator.MULTIPLICATION,
-                        NumberLiteralNode(3.0),
+                        FloatLiteralNode(3.0),
                         BinOpNode(
                             BinaryOperator.POWER,
-                            NumberLiteralNode(4.0),
-                            NumberLiteralNode(2.0)
+                            FloatLiteralNode(4.0),
+                            FloatLiteralNode(2.0)
                         )
                     )
                 ),
-                NumberLiteralNode(7.0)
+                FloatLiteralNode(7.0)
         ))))
+
+        assertGeneratesAST(testProgram, expectedAST)
+    }
+
+    @Test
+    fun shouldConstructNumberLiteralsCorrectly() {
+        val testProgram = """
+            var a = 3
+            var b = 3.0
+        """.trimIndent()
+
+        val expectedAST = ProgramNode(listOf(
+            VariableDeclarationNode(1, "a", IntegerLiteralNode(3)),
+            VariableDeclarationNode(2, "b", FloatLiteralNode(3.0))))
 
         assertGeneratesAST(testProgram, expectedAST)
     }

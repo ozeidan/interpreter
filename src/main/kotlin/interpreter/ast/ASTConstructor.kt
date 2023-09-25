@@ -79,12 +79,16 @@ private class ExpressionNodeConstructingVisitor : SeqLangBaseVisitor<ExpressionN
         return VariableAccessNode(ctx.IDENT().text)
     }
 
-    override fun visitSequence(ctx: SeqLangParser.SequenceContext): ExpressionNode {
-        return SequenceNode(this.visit(ctx.expr(0)), this.visit(ctx.expr(1)))
+    override fun visitSequenceLiteral(ctx: SeqLangParser.SequenceLiteralContext): ExpressionNode {
+        return SequenceLiteralNode(this.visit(ctx.expr(0)), this.visit(ctx.expr(1)))
     }
 
-    override fun visitNumberLiteral(ctx: SeqLangParser.NumberLiteralContext): ExpressionNode {
-        return NumberLiteralNode(ctx.NUMBER().text.toDouble())
+    override fun visitFloatLiteral(ctx: SeqLangParser.FloatLiteralContext): ExpressionNode {
+        return FloatLiteralNode(ctx.FLOAT().text.toDouble())
+    }
+
+    override fun visitIntegerLiteral(ctx: SeqLangParser.IntegerLiteralContext): ExpressionNode {
+        return IntegerLiteralNode(ctx.INTEGER().text.toInt())
     }
 
     override fun visitMapping(ctx: SeqLangParser.MappingContext): ExpressionNode {

@@ -32,8 +32,9 @@ powerExpr
 baseExpr
     : '(' expr ')'            # ParenthesizedExpr
     | IDENT                   # Identifier
-    | '{' expr ',' expr '}'   # Sequence
-    | NUMBER                  # NumberLiteral
+    | '{' expr ',' expr '}'   # SequenceLiteral
+    | INTEGER                 # IntegerLiteral
+    | FLOAT                   # FloatLiteral
     | 'map' '(' expr ',' IDENT '->' expr ')' # Mapping
     | 'reduce' '(' expr ',' expr ',' IDENT IDENT '->' expr ')' # Reduction
     ;
@@ -41,6 +42,7 @@ baseExpr
 // Lexer Rules
 
 IDENT: [a-zA-Z]+ ;
-NUMBER: '-'?[0-9]+ ('.' [0-9]+)? ;
+INTEGER: '-'?[0-9]+ ;
+FLOAT: '-'?[0-9]+ ('.' [0-9]+)? ;
 STRING: '"' ~["\r\n]* '"' ;
 WS: [ \t\r\n]+ -> skip ;

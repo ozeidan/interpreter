@@ -33,8 +33,11 @@ interface ASTVisitor<T> {
         return visitChildren(printStringNode, context)
     }
 
-    fun onNumberLiteralNodeVisited(numberLiteralNode: NumberLiteralNode, context: T) : T {
-        return visitChildren(numberLiteralNode, context)
+    fun onIntegerLiteralNodeVisited(integerLiteralNode: IntegerLiteralNode, context: T) : T {
+        return visitChildren(integerLiteralNode, context)
+    }
+    fun onFloatLiteralNodeVisited(floatLiteralNode: FloatLiteralNode, context: T) : T {
+        return visitChildren(floatLiteralNode, context)
     }
 
     fun onVariableAccessNodeVisited(variableAccessNode: VariableAccessNode, context: T) : T {
@@ -53,7 +56,7 @@ interface ASTVisitor<T> {
         return visitChildren(reducingNode, context)
     }
 
-    fun onSequenceNodeVisited(sequenceNode: SequenceNode, context: T) : T {
-        return visitChildren(sequenceNode, context)
+    fun onSequenceLiteralNodeVisited(sequenceLiteralNode: SequenceLiteralNode, context: T) : T {
+        return visitChildren(sequenceLiteralNode, context)
     }
 }
