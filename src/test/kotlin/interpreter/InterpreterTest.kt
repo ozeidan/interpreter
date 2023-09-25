@@ -96,13 +96,13 @@ class InterpreterTest {
     }
 
     @Test
-    fun shouldComputeIntegerWhenDividingIntegerAndInteger() {
+    fun shouldComputeFloatWhenDividingIntegerAndInteger() {
 
         val program = """
             out 3 / 2
         """.trimIndent()
 
-        assertProgramOutput(program, "1")
+        assertProgramOutput(program, "1.5")
     }
 
     @Test

@@ -114,8 +114,15 @@ private class TypeCheckingASTVisitor() : ASTVisitor<TypeCheckingContext> {
         }
 
         val newExpressionType =
-            if (leftExpressionType == Type.FLOAT || rightExpressionType == Type.FLOAT) { Type.FLOAT }
-            else { Type.INTEGER }
+            if (binOpNode.operator == BinaryOperator.DIVISION) {
+                Type.FLOAT
+            } else {
+                if (leftExpressionType == Type.FLOAT || rightExpressionType == Type.FLOAT) {
+                    Type.FLOAT
+                } else {
+                    Type.INTEGER
+                }
+            }
 
         return context.copy(evaluatedType = newExpressionType)
     }
