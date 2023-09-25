@@ -82,7 +82,7 @@ class InterpreterTest {
             out mapped
         """.trimIndent()
 
-        assertProgramOutput(program, "{ 0.5, 2, 4.5, 8 }")
+        assertProgramOutput(program, "{ 0.5, 2.0, 4.5, 8.0 }")
     }
 
     @Test

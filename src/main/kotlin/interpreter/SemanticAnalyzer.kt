@@ -14,8 +14,37 @@ class SemanticAnalyzer {
 }
 
 enum class Type {
-    NUMBER,
-    SEQUENCE
+    INTEGER,
+    FLOAT,
+    INTEGER_SEQUENCE,
+    FLOAT_SEQUENCE;
+
+    fun isNumeric() : Boolean {
+        return this == INTEGER || this == FLOAT
+    }
+    fun isSequence() : Boolean {
+        return this == INTEGER_SEQUENCE || this == FLOAT_SEQUENCE
+    }
+
+    fun toSequence() : Type {
+        return when (this) {
+            INTEGER -> INTEGER_SEQUENCE
+            FLOAT -> FLOAT_SEQUENCE
+            else -> {
+                throw Exception()
+            }
+        }
+    }
+
+    fun toNumeric() : Type {
+        return when (this) {
+            INTEGER_SEQUENCE -> INTEGER
+            FLOAT_SEQUENCE -> FLOAT
+            else -> {
+                throw Exception()
+            }
+        }
+    }
 }
 
 private data class TypeCheckingContext(
@@ -46,71 +75,93 @@ private class TypeCheckingASTVisitor() : ASTVisitor<TypeCheckingContext> {
         }
     }
 
-    override fun onSequenceNodeVisited(sequenceNode: SequenceNode, context: TypeCheckingContext): TypeCheckingContext {
-        visit(sequenceNode.upperBoundInclusive, context)
-        visit(sequenceNode.upperBoundInclusive, context)
-        return context.copy(evaluatedType = Type.SEQUENCE)
+    override fun onSequenceLiteralNodeVisited(sequenceLiteralNode: SequenceLiteralNode, context: TypeCheckingContext): TypeCheckingContext {
+        val lowerBoundType = visit(sequenceLiteralNode.lowerBoundInclusive, context).evaluatedType
+        val upperBoundType = visit(sequenceLiteralNode.upperBoundInclusive, context).evaluatedType
+
+        if (lowerBoundType != Type.INTEGER) {
+            throw InterpreterException("invalid usage of expression of type $lowerBoundType as lower sequence bound")
+        }
+
+        if (upperBoundType != Type.INTEGER) {
+            throw InterpreterException("invalid usage of expression of type $upperBoundType as upper sequence bound")
+        }
+
+        return context.copy(evaluatedType = Type.INTEGER_SEQUENCE)
     }
 
-    override fun onNumberLiteralNodeVisited(
-        numberLiteralNode: NumberLiteralNode,
+    override fun onIntegerLiteralNodeVisited(
+        integerLiteralNode: IntegerLiteralNode,
         context: TypeCheckingContext
     ): TypeCheckingContext {
-        return context.copy(evaluatedType = Type.NUMBER)
+        return context.copy(evaluatedType = Type.INTEGER)
     }
 
-    override fun onBinOpNodeVisited(binOpNode: BinOpNode, context: TypeCheckingContext): TypeCheckingContext {
-        val (_, leftExpressionType) = visit(binOpNode.left, context)
-        val (_, rightExpressionType) = visit(binOpNode.right, context)
+    override fun onFloatLiteralNodeVisited(
+        floatLiteralNode: FloatLiteralNode,
+        context: TypeCheckingContext
+    ): TypeCheckingContext {
+        return context.copy(evaluatedType = Type.FLOAT)
+    }
 
-        if (leftExpressionType != Type.NUMBER || rightExpressionType != Type.NUMBER) {
+
+    override fun onBinOpNodeVisited(binOpNode: BinOpNode, context: TypeCheckingContext): TypeCheckingContext {
+        val leftExpressionType = visit(binOpNode.left, context).evaluatedType!!
+        val rightExpressionType = visit(binOpNode.right, context).evaluatedType!!
+
+        if (leftExpressionType.isSequence() || rightExpressionType.isSequence()) {
             throw InterpreterException("invalid usage of operator ${binOpNode.operator} on sequence")
         }
 
-        return context.copy(evaluatedType = Type.NUMBER)
+        val newExpressionType =
+            if (leftExpressionType == Type.FLOAT || rightExpressionType == Type.FLOAT) { Type.FLOAT }
+            else { Type.INTEGER }
+
+        return context.copy(evaluatedType = newExpressionType)
     }
 
     override fun onMappingNodeVisited(mappingNode: MappingNode, context: TypeCheckingContext): TypeCheckingContext {
-        val (_, sequenceExpressionType) = visit(mappingNode.sequenceExpression, context)
+        val sequenceExpressionType = visit(mappingNode.sequenceExpression, context).evaluatedType!!
 
-        if (sequenceExpressionType != Type.SEQUENCE) {
+        if (!sequenceExpressionType.isSequence()) {
             throw InterpreterException("first parameter of map must be of sequence type")
         }
 
-        val (_, lambdaExpressionType) = visit(mappingNode.lambda.expression,
-            context.copy(symbolTable = context.symbolTable + (mappingNode.lambda.identifier to Type.NUMBER)))
+        val lambdaParameterType = sequenceExpressionType.toNumeric()
 
-        if (lambdaExpressionType != Type.NUMBER) {
+        val lambdaExpressionType = visit(mappingNode.lambda.expression,
+            context.copy(symbolTable = mapOf(mappingNode.lambda.identifier to lambdaParameterType))).evaluatedType!!
+
+        if (!lambdaExpressionType.isNumeric()) {
             throw InterpreterException("return value of lambda must be scalar")
         }
 
-        return context.copy(evaluatedType = Type.SEQUENCE)
+        return context.copy(evaluatedType = lambdaParameterType.toSequence())
     }
 
     override fun onReducingNodeVisited(reducingNode: ReducingNode, context: TypeCheckingContext): TypeCheckingContext {
-        val (_, sequenceExpressionType) = visit(reducingNode.sequenceExpression, context)
+        val sequenceExpressionType = visit(reducingNode.sequenceExpression, context).evaluatedType!!
 
-        if (sequenceExpressionType != Type.SEQUENCE) {
+        if (!sequenceExpressionType.isSequence()) {
             throw InterpreterException("first parameter of reduce must be of sequence type")
         }
 
-        val (_, neutralElementExpressionType) = visit(reducingNode.neutralElementExpression, context)
+        val neutralElementExpressionType = visit(reducingNode.neutralElementExpression, context).evaluatedType!!
 
-        if (neutralElementExpressionType != Type.NUMBER) {
+        if (!neutralElementExpressionType.isNumeric()) {
             throw InterpreterException("second parameter of reduce must be of scalar type")
         }
 
+        val lambdaExpressionType = visit(reducingNode.lambda.expression,
+            context.copy(symbolTable = mapOf(
+                (reducingNode.lambda.leftIdentifier to sequenceExpressionType.toNumeric()),
+                    (reducingNode.lambda.rightIdentifier to neutralElementExpressionType)))).evaluatedType!!
 
-        val (_, lambdaExpressionType) = visit(reducingNode.lambda.expression,
-            context.copy(symbolTable = context.symbolTable +
-                    (reducingNode.lambda.leftIdentifier to Type.NUMBER) +
-                    (reducingNode.lambda.rightIdentifier to Type.NUMBER)))
-
-        if (lambdaExpressionType != Type.NUMBER) {
+        if (!lambdaExpressionType.isNumeric()) {
             throw InterpreterException("return value of lambda must be scalar")
         }
 
-        return context.copy(evaluatedType = Type.NUMBER)
+        return context.copy(evaluatedType = lambdaExpressionType)
     }
 
     override fun onVariableAccessNodeVisited(
@@ -120,7 +171,7 @@ private class TypeCheckingASTVisitor() : ASTVisitor<TypeCheckingContext> {
         if (!context.symbolTable.containsKey(variableAccessNode.identifier)) {
             throw InterpreterException("access of undeclared variable")
         }
-        return context.copy(
-            evaluatedType = context.symbolTable.getOrDefault(variableAccessNode.identifier, Type.NUMBER))
+
+        return context.copy(evaluatedType = context.symbolTable[variableAccessNode.identifier])
     }
 }

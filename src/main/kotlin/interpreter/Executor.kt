@@ -54,10 +54,6 @@ private class ExecutingASTVisitor : ASTVisitor<ExecutionContext> {
         variableAccessNode: VariableAccessNode,
         context: ExecutionContext
     ): ExecutionContext {
-        if (!context.scope.containsKey(variableAccessNode.identifier)) {
-            println(variableAccessNode.identifier)
-        }
-
         return context.copy(evaluationResult = context.scope[variableAccessNode.identifier]!!)
     }
 
@@ -143,9 +139,9 @@ private class ExecutingASTVisitor : ASTVisitor<ExecutionContext> {
         return context.copy(evaluationResult = Eval.Scalar(evaluationResult))
     }
 
-    override fun onSequenceNodeVisited(sequenceNode: SequenceNode, context: ExecutionContext): ExecutionContext {
-        val (_, lowerEvaluationResult) = visit(sequenceNode.lowerBoundInclusive, context)
-        val (_, upperEvaluationResult) = visit(sequenceNode.upperBoundInclusive, context)
+    override fun onSequenceLiteralNodeVisited(sequenceLiteralNode: SequenceLiteralNode, context: ExecutionContext): ExecutionContext {
+        val (_, lowerEvaluationResult) = visit(sequenceLiteralNode.lowerBoundInclusive, context)
+        val (_, upperEvaluationResult) = visit(sequenceLiteralNode.upperBoundInclusive, context)
 
         require(lowerEvaluationResult is Eval.Scalar && upperEvaluationResult is Eval.Scalar)
 
@@ -161,10 +157,17 @@ private class ExecutingASTVisitor : ASTVisitor<ExecutionContext> {
         return context.copy(evaluationResult = Eval.Sequence(newSequence))
     }
 
-    override fun onNumberLiteralNodeVisited(
-        numberLiteralNode: NumberLiteralNode,
+    override fun onIntegerLiteralNodeVisited(
+        integerLiteralNode: IntegerLiteralNode,
         context: ExecutionContext
     ): ExecutionContext {
-        return context.copy(evaluationResult = Eval.Scalar(numberLiteralNode.value))
+        return context.copy(evaluationResult = Eval.Scalar(integerLiteralNode.value.toDouble())) // TODO
+    }
+
+    override fun onFloatLiteralNodeVisited(
+        floatLiteralNode: FloatLiteralNode,
+        context: ExecutionContext
+    ): ExecutionContext {
+        return context.copy(evaluationResult = Eval.Scalar(floatLiteralNode.value))
     }
 }

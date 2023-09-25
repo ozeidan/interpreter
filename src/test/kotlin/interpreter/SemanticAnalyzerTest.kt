@@ -15,8 +15,8 @@ class SemanticAnalyzerTest {
             ProgramNode(listOf(PrintExpressionNode(1,
                 BinOpNode(
                     BinaryOperator.ADDITION,
-                    NumberLiteralNode(3.0),
-                    NumberLiteralNode(4.0)))))
+                    FloatLiteralNode(3.0),
+                    FloatLiteralNode(4.0)))))
 
         assertDoesNotThrow { toTest.analyze(ast) }
     }
@@ -26,21 +26,43 @@ class SemanticAnalyzerTest {
         val ast =
             ProgramNode(listOf(PrintExpressionNode(1,
                 BinOpNode(BinaryOperator.ADDITION,
-                    NumberLiteralNode(3.0),
+                    FloatLiteralNode(3.0),
                     ReducingNode(
-                        SequenceNode(NumberLiteralNode(0.0), NumberLiteralNode(3.0)),
-                        NumberLiteralNode(3.0),
+                        SequenceLiteralNode(IntegerLiteralNode(0), IntegerLiteralNode(3)),
+                        FloatLiteralNode(3.0),
                         BinaryLambda(
                             "x",
                             "y",
                             BinOpNode(
                                 BinaryOperator.ADDITION,
-                                NumberLiteralNode(3.0),
-                                NumberLiteralNode(4.0)))
+                                FloatLiteralNode(3.0),
+                                FloatLiteralNode(4.0)))
                     )))))
 
         assertDoesNotThrow { toTest.analyze(ast) }
     }
+
+    @Test
+    fun shouldAllowSequenceBoundaryExpressionThatEvaluatesToInteger() {
+        val ast =
+            ProgramNode(listOf(PrintExpressionNode(1,
+                SequenceLiteralNode(
+                    IntegerLiteralNode(3),
+                    ReducingNode(
+                        SequenceLiteralNode(IntegerLiteralNode(1), IntegerLiteralNode(5)),
+                        IntegerLiteralNode(0),
+                        BinaryLambda(
+                            "x",
+                            "y",
+                            BinOpNode(
+                                BinaryOperator.ADDITION,
+                                VariableAccessNode("x"),
+                                VariableAccessNode("y")))
+                    )))))
+
+        assertDoesNotThrow { toTest.analyze(ast) }
+    }
+
 
     @Test
     fun shouldAllowComplexValidExpression() {
@@ -51,12 +73,12 @@ class SemanticAnalyzerTest {
                 VariableDeclarationNode(1,
                     "n",
                     MappingNode(
-                        SequenceNode(NumberLiteralNode(1.0), NumberLiteralNode(10.0)),
+                        SequenceLiteralNode(IntegerLiteralNode(1), IntegerLiteralNode(10)),
                         UnaryLambda(
                             "x",
                             ReducingNode(
-                                SequenceNode(NumberLiteralNode(1.0), VariableAccessNode("x")),
-                                NumberLiteralNode(1.0),
+                                SequenceLiteralNode(IntegerLiteralNode(1), VariableAccessNode("x")),
+                                FloatLiteralNode(1.0),
                                 BinaryLambda(
                                     "x",
                                     "y",
@@ -72,7 +94,7 @@ class SemanticAnalyzerTest {
                 PrintExpressionNode(1,
                     ReducingNode(
                         VariableAccessNode("n"),
-                        NumberLiteralNode(0.0),
+                        FloatLiteralNode(0.0),
                         BinaryLambda(
                             "x",
                             "y",
@@ -95,10 +117,10 @@ class SemanticAnalyzerTest {
             ProgramNode(listOf(PrintExpressionNode(1,
                 BinOpNode(
                     BinaryOperator.ADDITION,
-                    NumberLiteralNode(3.0),
-                    SequenceNode(
-                        NumberLiteralNode(0.0),
-                        NumberLiteralNode(3.0))))))
+                    FloatLiteralNode(3.0),
+                    SequenceLiteralNode(
+                        FloatLiteralNode(0.0),
+                        FloatLiteralNode(3.0))))))
 
         assertThrows<SeqLangException> { toTest.analyze(ast) }
     }
@@ -109,18 +131,18 @@ class SemanticAnalyzerTest {
             ProgramNode(listOf(PrintExpressionNode(1,
                 BinOpNode(
                     BinaryOperator.ADDITION,
-                    NumberLiteralNode(3.0),
+                    FloatLiteralNode(3.0),
                     MappingNode(
-                        SequenceNode(
-                            NumberLiteralNode(1.0),
-                            NumberLiteralNode(3.0)
+                        SequenceLiteralNode(
+                            FloatLiteralNode(1.0),
+                            FloatLiteralNode(3.0)
                         ),
                         UnaryLambda(
                             "x",
                             BinOpNode(
                                 BinaryOperator.ADDITION,
                                 VariableAccessNode("x"),
-                                NumberLiteralNode(3.0)
+                                FloatLiteralNode(3.0)
                             )
                         ))))))
 
@@ -132,11 +154,11 @@ class SemanticAnalyzerTest {
         val ast =
             ProgramNode(listOf(
                 VariableDeclarationNode(1, "a",
-                    SequenceNode(NumberLiteralNode(0.0), NumberLiteralNode(3.0))),
+                    SequenceLiteralNode(FloatLiteralNode(0.0), FloatLiteralNode(3.0))),
                 PrintExpressionNode(1,
                     BinOpNode(
                         BinaryOperator.ADDITION,
-                        NumberLiteralNode(3.0),
+                        FloatLiteralNode(3.0),
                         VariableAccessNode("a")
             ))))
 
@@ -148,13 +170,13 @@ class SemanticAnalyzerTest {
         val ast =
             ProgramNode(listOf(PrintExpressionNode(1,
                 MappingNode(
-                    NumberLiteralNode(3.0),
+                    FloatLiteralNode(3.0),
                     UnaryLambda(
                         "x",
                         BinOpNode(
                             BinaryOperator.ADDITION,
-                            NumberLiteralNode(3.0),
-                            NumberLiteralNode(4.0)))
+                            FloatLiteralNode(3.0),
+                            FloatLiteralNode(4.0)))
                 )
             )))
 
@@ -166,10 +188,10 @@ class SemanticAnalyzerTest {
         val ast =
             ProgramNode(listOf(PrintExpressionNode(1,
                 MappingNode(
-                    SequenceNode(NumberLiteralNode(3.0), NumberLiteralNode(4.0)),
+                    SequenceLiteralNode(FloatLiteralNode(3.0), FloatLiteralNode(4.0)),
                     UnaryLambda(
                         "x",
-                        SequenceNode(NumberLiteralNode(3.0), NumberLiteralNode(4.0)),
+                        SequenceLiteralNode(FloatLiteralNode(3.0), FloatLiteralNode(4.0)),
                     )
                 )
             )))
@@ -182,15 +204,15 @@ class SemanticAnalyzerTest {
         val ast =
             ProgramNode(listOf(PrintExpressionNode(1,
                 ReducingNode(
-                    NumberLiteralNode(3.0),
-                    NumberLiteralNode(3.0),
+                    FloatLiteralNode(3.0),
+                    FloatLiteralNode(3.0),
                     BinaryLambda(
                         "x",
                         "y",
                         BinOpNode(
                             BinaryOperator.ADDITION,
-                            NumberLiteralNode(3.0),
-                            NumberLiteralNode(4.0)))
+                            FloatLiteralNode(3.0),
+                            FloatLiteralNode(4.0)))
                 )
             )))
 
@@ -202,15 +224,15 @@ class SemanticAnalyzerTest {
         val ast =
             ProgramNode(listOf(PrintExpressionNode(1,
                 ReducingNode(
-                    SequenceNode(NumberLiteralNode(3.0), NumberLiteralNode(4.0)),
-                    SequenceNode(NumberLiteralNode(3.0), NumberLiteralNode(4.0)),
+                    SequenceLiteralNode(FloatLiteralNode(3.0), FloatLiteralNode(4.0)),
+                    SequenceLiteralNode(FloatLiteralNode(3.0), FloatLiteralNode(4.0)),
                     BinaryLambda(
                         "x",
                         "y",
                         BinOpNode(
                             BinaryOperator.ADDITION,
-                            NumberLiteralNode(3.0),
-                            NumberLiteralNode(4.0)))
+                            FloatLiteralNode(3.0),
+                            FloatLiteralNode(4.0)))
                 )
             )))
 
@@ -222,20 +244,20 @@ class SemanticAnalyzerTest {
         val ast =
             ProgramNode(listOf(PrintExpressionNode(1,
                 ReducingNode(
-                    SequenceNode(NumberLiteralNode(3.0), NumberLiteralNode(4.0)),
-                    SequenceNode(NumberLiteralNode(3.0), NumberLiteralNode(4.0)),
+                    SequenceLiteralNode(FloatLiteralNode(3.0), FloatLiteralNode(4.0)),
+                    SequenceLiteralNode(FloatLiteralNode(3.0), FloatLiteralNode(4.0)),
                     BinaryLambda(
                         "x",
                         "y",
                         MappingNode(
-                            SequenceNode(
-                                NumberLiteralNode(1.0),
-                                NumberLiteralNode(2.0)
+                            SequenceLiteralNode(
+                                FloatLiteralNode(1.0),
+                                FloatLiteralNode(2.0)
                             ),
                             UnaryLambda(
                                 "x",
-                                SequenceNode(
-                                    NumberLiteralNode(1.0),
+                                SequenceLiteralNode(
+                                    FloatLiteralNode(1.0),
                                     VariableAccessNode("x")))))
                 )
             )))
@@ -244,10 +266,58 @@ class SemanticAnalyzerTest {
     }
 
     @Test
+    fun shouldThrowWhenSequenceBoundaryExpressionIsFloat() {
+        val ast =
+            ProgramNode(listOf(
+                PrintExpressionNode(1,
+                    SequenceLiteralNode(
+                        FloatLiteralNode(1.0),
+                        FloatLiteralNode(2.0)))))
+
+        assertThrows<SeqLangException> { toTest.analyze(ast) }
+    }
+
+    @Test
+    fun shouldThrowWhenSequenceBoundaryExpressionEvaluatesToFloat() {
+        val ast =
+            ProgramNode(listOf(
+                PrintExpressionNode(1,
+                    SequenceLiteralNode(
+                        IntegerLiteralNode(1),
+                        BinOpNode(BinaryOperator.ADDITION,
+                            IntegerLiteralNode(1),
+                            FloatLiteralNode(3.5))))))
+
+        assertThrows<SeqLangException> { toTest.analyze(ast) }
+    }
+
+    @Test
+    fun shouldPropagateReductionExpressionType() {
+        val ast =
+            ProgramNode(listOf(PrintExpressionNode(1,
+                SequenceLiteralNode(
+                    IntegerLiteralNode(3),
+                    ReducingNode(
+                        SequenceLiteralNode(IntegerLiteralNode(1), IntegerLiteralNode(5)),
+                        FloatLiteralNode(0.0), // result of reduction should be float now
+                        BinaryLambda(
+                            "x",
+                            "y",
+                            BinOpNode(
+                                BinaryOperator.ADDITION,
+                                VariableAccessNode("x"),
+                                VariableAccessNode("y")))
+                    )))))
+
+        assertThrows<SeqLangException> { toTest.analyze(ast) }
+    }
+
+
+    @Test
     fun shouldThrowWhenAccessingUndeclaredVariable() {
         val ast =
             ProgramNode(listOf(
-                VariableDeclarationNode(1, "a", NumberLiteralNode(1.0)),
+                VariableDeclarationNode(1, "a", FloatLiteralNode(1.0)),
                 VariableDeclarationNode(2, "b", VariableAccessNode("c"))))
 
         assertThrows<SeqLangException> { toTest.analyze(ast) }
