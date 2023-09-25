@@ -15,21 +15,90 @@ class Executor(private val writer: Writer) {
 }
 
 sealed class Eval {
+    abstract fun binaryOperation(operator : BinaryOperator, other: Eval) : Eval
     abstract fun print() : String
 
-    data class Scalar(val value : Double) : Eval() {
+    data class Float(val value : Double) : Eval() {
+        override fun binaryOperation(operator: BinaryOperator, other: Eval): Eval {
+            val otherValue = when (other) {
+                is Float -> other.value
+                is Integer -> other.value.toDouble()
+                else -> {
+                    throw Exception()
+                }
+            }
+
+            return Float(when (operator) {
+                BinaryOperator.ADDITION -> value + otherValue
+                BinaryOperator.SUBTRACTION -> value - otherValue
+                BinaryOperator.MULTIPLICATION -> value * otherValue
+                BinaryOperator.DIVISION -> {
+                    if (otherValue == 0.0) {
+                        throw InterpreterException("attempted division by 0")
+                    }
+                    value / otherValue
+                }
+                BinaryOperator.POWER -> value.pow(otherValue)
+            })
+        }
+
+        override fun print(): String {
+            return value.toString()
+        }
+
+    }
+    data class Integer(val value : Int) : Eval() {
+        override fun binaryOperation(operator: BinaryOperator, other: Eval): Eval {
+            if (other is Float) {
+                return Float(value.toDouble()).binaryOperation(operator, other)
+            }
+
+            require(other is Integer)
+
+            val otherValue = other.value
+            return when (operator) {
+                BinaryOperator.ADDITION -> Integer(value + otherValue)
+                BinaryOperator.SUBTRACTION -> Integer(value - otherValue)
+                BinaryOperator.MULTIPLICATION -> Integer(value * otherValue)
+                BinaryOperator.DIVISION -> {
+                    if (otherValue == 0) {
+                        throw InterpreterException("attempted division by 0")
+                    }
+                    Float(value / otherValue.toDouble())
+                }
+                BinaryOperator.POWER -> Integer(value.toDouble().pow(other.value).toInt()) // TODO: way to avoid conversion?
+            }
+        }
+
         override fun print(): String {
             return value.toString()
         }
     }
-    data class Sequence(val stream : Stream<Double>) : Eval() {
+    data class Sequence(
+        val lowerInclusive: Int,
+        val upperInclusive: Int,
+        val mappedFunctions : List<(Eval) -> Eval>)
+    : Eval() {
+        override fun binaryOperation(operator: BinaryOperator, other: Eval): Eval {
+            throw Exception()
+        }
+
         override fun print(): String {
-            // TODO: cleaner?
-            val middlePart = stream.map { "$it, " }.reduce("") { a, b -> a + b }
+            val middlePart = buildStream().map { "${it.print()}, " }.reduce("") { a, b -> a + b }
             val trimmed = middlePart.substring(0, middlePart.length - 2)
             return "{ $trimmed }"
         }
 
+        fun buildStream(): Stream<Eval> {
+            val baseStream : Stream<Eval> =
+                IntStream.rangeClosed(lowerInclusive, upperInclusive).boxed().map { Integer(it) }
+
+            val mappedStream = mappedFunctions.fold(baseStream) { stream, mappedFunction ->
+                stream.map { mappedFunction.invoke(it) }
+            }
+
+            return mappedStream.parallel()
+        }
     }
 }
 
@@ -54,7 +123,7 @@ private class ExecutingASTVisitor : ASTVisitor<ExecutionContext> {
         variableAccessNode: VariableAccessNode,
         context: ExecutionContext
     ): ExecutionContext {
-        return context.copy(evaluationResult = context.scope[variableAccessNode.identifier]!!)
+        return context.copy(evaluationResult = context.scope[variableAccessNode.identifier])
     }
 
     override fun onPrintExpressionNodeVisited(
@@ -78,96 +147,84 @@ private class ExecutingASTVisitor : ASTVisitor<ExecutionContext> {
     }
 
     override fun onBinOpNodeVisited(binOpNode: BinOpNode, context: ExecutionContext): ExecutionContext {
-        val (_, leftEvaluationResult) = visit(binOpNode.left, context)
-        val (_, rightEvaluationResult) = visit(binOpNode.right, context)
+        val leftEvaluationResult = visit(binOpNode.left, context).evaluationResult!!
+        val rightEvaluationResult = visit(binOpNode.right, context).evaluationResult!!
 
-        require(leftEvaluationResult is Eval.Scalar && rightEvaluationResult is Eval.Scalar)
+        require(leftEvaluationResult !is Eval.Sequence && rightEvaluationResult !is Eval.Sequence)
 
-        val evaluationResult = when (binOpNode.operator) {
-            BinaryOperator.ADDITION -> Eval.Scalar(leftEvaluationResult.value + rightEvaluationResult.value)
-            BinaryOperator.SUBTRACTION -> Eval.Scalar(leftEvaluationResult.value - rightEvaluationResult.value)
-            BinaryOperator.MULTIPLICATION -> Eval.Scalar(leftEvaluationResult.value * rightEvaluationResult.value)
-            BinaryOperator.DIVISION -> {
-                if (rightEvaluationResult.value == 0.0) {
-                    throw InterpreterException("attempted division by 0")
-                }
-                Eval.Scalar(leftEvaluationResult.value / rightEvaluationResult.value)
-            }
-            BinaryOperator.POWER -> Eval.Scalar(leftEvaluationResult.value.pow(rightEvaluationResult.value))
-        }
+        val evaluationResult = leftEvaluationResult.binaryOperation(binOpNode.operator, rightEvaluationResult)
         return context.copy(evaluationResult = evaluationResult)
     }
 
     override fun onMappingNodeVisited(mappingNode: MappingNode, context: ExecutionContext): ExecutionContext {
-        val (_, sequenceEvaluationResult) = visit(mappingNode.sequenceExpression, context)
+        val sequenceEvaluationResult = visit(mappingNode.sequenceExpression, context).evaluationResult
 
         require(sequenceEvaluationResult is Eval.Sequence)
 
-        val newSequence = Eval.Sequence(sequenceEvaluationResult.stream.map {
-            val (_, evaluationResult) = visit(
+        val evaluationFun = {
+            sequenceValue : Eval ->
+            visit(
                 mappingNode.lambda.expression,
-                context.copy(scope = mapOf((mappingNode.lambda.identifier to Eval.Scalar(it))))
-            )
+                context.copy(scope = mapOf(mappingNode.lambda.identifier to sequenceValue))
+            ).evaluationResult!!
+        }
 
-            require(evaluationResult is Eval.Scalar)
-            evaluationResult.value
-        })
-
-        return context.copy(evaluationResult = newSequence)
+        return context.copy(evaluationResult = sequenceEvaluationResult.copy(
+            mappedFunctions = sequenceEvaluationResult.mappedFunctions + evaluationFun))
     }
 
     override fun onReducingNodeVisited(reducingNode: ReducingNode, context: ExecutionContext): ExecutionContext {
-        val (_, sequenceEvaluationResult) = visit(reducingNode.sequenceExpression, context)
-        val (_, neutralElementEvaluationResult) = visit(reducingNode.neutralElementExpression, context)
+        val sequenceEvaluationResult = visit(reducingNode.sequenceExpression, context).evaluationResult
+        val neutralElementEvaluationResult = visit(reducingNode.neutralElementExpression, context).evaluationResult
 
-        require(sequenceEvaluationResult is Eval.Sequence && neutralElementEvaluationResult is Eval.Scalar)
+        require(sequenceEvaluationResult is Eval.Sequence)
+        require(neutralElementEvaluationResult !is Eval.Sequence)
 
-        val evaluationResult = sequenceEvaluationResult.stream.reduce(neutralElementEvaluationResult.value) { x, y ->
-            val lambdaResult = visit(
+        val evaluationResult = sequenceEvaluationResult.buildStream().reduce(neutralElementEvaluationResult)
+        { x, y ->
+            visit(
                 reducingNode.lambda.expression,
                 context.copy(
                     scope = mapOf(
-                        (reducingNode.lambda.leftIdentifier to Eval.Scalar(x)),
-                        (reducingNode.lambda.rightIdentifier to Eval.Scalar(y)),
+                        (reducingNode.lambda.leftIdentifier to x),
+                        (reducingNode.lambda.rightIdentifier to y),
                     )
                 )
-            ).evaluationResult
-
-            (lambdaResult as Eval.Scalar).value
+            ).evaluationResult!!
         }
 
-        return context.copy(evaluationResult = Eval.Scalar(evaluationResult))
+        return context.copy(evaluationResult = evaluationResult)
     }
 
-    override fun onSequenceLiteralNodeVisited(sequenceLiteralNode: SequenceLiteralNode, context: ExecutionContext): ExecutionContext {
-        val (_, lowerEvaluationResult) = visit(sequenceLiteralNode.lowerBoundInclusive, context)
-        val (_, upperEvaluationResult) = visit(sequenceLiteralNode.upperBoundInclusive, context)
+    override fun onSequenceNodeVisited(sequenceNode: SequenceNode, context: ExecutionContext): ExecutionContext {
+        val lowerEvaluationResult = visit(sequenceNode.lowerBoundInclusive, context).evaluationResult
+        val upperEvaluationResult = visit(sequenceNode.upperBoundInclusive, context).evaluationResult
 
-        require(lowerEvaluationResult is Eval.Scalar && upperEvaluationResult is Eval.Scalar)
+        require(lowerEvaluationResult is Eval.Integer && upperEvaluationResult is Eval.Integer)
 
         if (upperEvaluationResult.value < lowerEvaluationResult.value) {
             throw InterpreterException("lower sequence boundary is higher than upper boundary")
         }
 
-        val newSequence =
-            IntStream.rangeClosed(lowerEvaluationResult.value.toInt(), upperEvaluationResult.value.toInt())
-                .asDoubleStream().boxed().parallel()
-
-
-        return context.copy(evaluationResult = Eval.Sequence(newSequence))
+        return context.copy(evaluationResult =
+            Eval.Sequence(
+                lowerEvaluationResult.value,
+                upperEvaluationResult.value,
+                listOf()
+        ))
     }
 
     override fun onIntegerLiteralNodeVisited(
         integerLiteralNode: IntegerLiteralNode,
         context: ExecutionContext
     ): ExecutionContext {
-        return context.copy(evaluationResult = Eval.Scalar(integerLiteralNode.value.toDouble())) // TODO
+        return context.copy(evaluationResult = Eval.Integer(integerLiteralNode.value))
     }
 
     override fun onFloatLiteralNodeVisited(
         floatLiteralNode: FloatLiteralNode,
         context: ExecutionContext
     ): ExecutionContext {
-        return context.copy(evaluationResult = Eval.Scalar(floatLiteralNode.value))
+        return context.copy(evaluationResult = Eval.Float(floatLiteralNode.value))
     }
 }
