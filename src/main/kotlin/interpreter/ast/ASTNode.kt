@@ -1,10 +1,14 @@
 package interpreter.ast
 
-abstract class ASTNode {
+sealed class ASTNode {
     abstract fun getChildren() : List<ASTNode>
+    abstract fun <Context, Eval> visit(visitor : ASTVisitor<Context, Eval>, context: Context) : Context
+    abstract class Statement(val linenumber: Int) : ASTNode()
+    abstract class Expression : ASTNode() {
+        override fun <Context, Eval> visit(visitor : ASTVisitor<Context, Eval>, context: Context) : Context {
+            return this.visitExpression(visitor, context).first
+        }
 
-    /**
-     * This function is supposed to delegate to the method of the visitor that corresponds to the node's type.
-     */
-    abstract fun <T> visit(visitor : ASTVisitor<T>, context: T) : T
+        abstract fun <Context, Eval> visitExpression(visitor : ASTVisitor<Context, Eval>, context: Context) : Pair<Context, Eval>
+    }
 }

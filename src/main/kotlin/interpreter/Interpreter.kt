@@ -20,7 +20,7 @@ class Interpreter(writer: Writer = PrintWriter(System.out)) : BaseErrorListener(
     private var symbolTable : Map<String, Type> = mapOf()
 
     private val executor = Executor(writer)
-    private var scope : Map<String, Eval> = mapOf()
+    private var scope : Map<String, Value> = mapOf()
 
     private val errorListener = ErrorListener()
 

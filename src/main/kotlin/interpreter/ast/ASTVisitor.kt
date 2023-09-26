@@ -1,62 +1,51 @@
 package interpreter.ast
 
 /**
- * Interface of a visitor on the SeqLang AST which, by default, does DFS while also maintaining a context that is passed
- * through.
- *
- * Implementers of this interface implement the corresponding functions to determine what happens when an AST node of
- * a certain type is visited. The concrete implementations only need to supply implementations for node types where
- * the visitation should actually mutate the context.
+ * Base class of a visitor on the SeqLang AST. Default behavior to pass the context (of type Context) through
+ * the child nodes in oder is in place for nodes that are not expressions. Visitor methods, which additionally
+ * return an evaluation result of type Eval, have to be implemented for all ExpressionNode types of the AST.
  */
-interface ASTVisitor<T> {
-    fun visit(node: ASTNode, context: T) : T {
+abstract class ASTVisitor<Context, Eval> {
+    fun visit(node: ASTNode, context: Context) : Context {
         return node.visit(this, context)
     }
 
-    fun visitChildren(node: ASTNode, context: T) : T {
-        return node.getChildren().fold(context) { c, n -> n.visit(this, c) }
+    fun visit(node: ASTNode.Expression, context: Context) : Pair<Context, Eval> {
+        return node.visitExpression(this, context)
     }
 
-    fun onProgramNodeVisited(programNode: ProgramNode, context: T) : T {
+    protected fun visitChildren(node: ASTNode, context: Context) : Context {
+        return node.getChildren().fold(context) { c, n ->
+            n.visit(this, c)
+        }
+    }
+
+    open fun onProgramNodeVisited(programNode: ProgramNode, context: Context) : Context {
         return visitChildren(programNode, context)
     }
 
-    fun onVariableDeclarationNodeVisited(variableDeclarationNode: VariableDeclarationNode, context: T) : T {
+    open fun onVariableDeclarationNodeVisited(variableDeclarationNode: VariableDeclarationNode, context: Context) : Context {
         return visitChildren(variableDeclarationNode, context)
     }
 
-    fun onPrintExpressionNodeVisited(printExpressionNode: PrintExpressionNode, context: T) : T {
+    open fun onPrintExpressionNodeVisited(printExpressionNode: PrintExpressionNode, context: Context) : Context {
         return visitChildren(printExpressionNode, context)
     }
 
-    fun onPrintStringNodeVisited(printStringNode: PrintStringNode, context: T) : T {
+    open fun onPrintStringNodeVisited(printStringNode: PrintStringNode, context: Context) : Context {
         return visitChildren(printStringNode, context)
     }
 
-    fun onIntegerLiteralNodeVisited(integerLiteralNode: IntegerLiteralNode, context: T) : T {
-        return visitChildren(integerLiteralNode, context)
-    }
-    fun onFloatLiteralNodeVisited(floatLiteralNode: FloatLiteralNode, context: T) : T {
-        return visitChildren(floatLiteralNode, context)
-    }
+    abstract fun onIntegerLiteralNodeVisited(integerLiteralNode: IntegerLiteralNode, context: Context) : Pair<Context, Eval>
+    abstract fun onFloatLiteralNodeVisited(floatLiteralNode: FloatLiteralNode, context: Context) : Pair<Context, Eval>
 
-    fun onVariableAccessNodeVisited(variableAccessNode: VariableAccessNode, context: T) : T {
-        return visitChildren(variableAccessNode, context)
-    }
+    abstract fun onVariableAccessNodeVisited(variableAccessNode: VariableAccessNode, context: Context) : Pair<Context, Eval>
 
-    fun onBinOpNodeVisited(binOpNode: BinOpNode, context: T) : T {
-        return visitChildren(binOpNode, context)
-    }
+    abstract fun onBinOpNodeVisited(binOpNode: BinOpNode, context: Context) : Pair<Context, Eval>
 
-    fun onMappingNodeVisited(mappingNode: MappingNode, context: T) : T {
-        return visitChildren(mappingNode, context)
-    }
+    abstract fun onMappingNodeVisited(mappingNode: MappingNode, context: Context) : Pair<Context, Eval>
 
-    fun onReducingNodeVisited(reducingNode: ReducingNode, context: T) : T {
-        return visitChildren(reducingNode, context)
-    }
+    abstract fun onReducingNodeVisited(reducingNode: ReducingNode, context: Context) : Pair<Context, Eval>
 
-    fun onSequenceNodeVisited(sequenceNode: SequenceNode, context: T) : T {
-        return visitChildren(sequenceNode, context)
-    }
+    abstract fun onSequenceNodeVisited(sequenceNode: SequenceNode, context: Context) : Pair<Context, Eval>
 }

@@ -1,8 +1,8 @@
 package interpreter
 
-import interpreter.ast.StatementNode
+import interpreter.ast.ASTNode
 
-fun <T> addLineNumberToExceptions(statementNode: StatementNode, function: () -> T) : T {
+fun <T> addLineNumberToExceptions(statementNode: ASTNode.Statement, function: () -> T) : T {
     try {
         return function()
     } catch (e: InterpreterException) {

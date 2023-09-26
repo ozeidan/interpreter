@@ -2,6 +2,7 @@ package interpreter
 
 import interpreter.ast.*
 import java.io.Writer
+import java.util.*
 import java.util.stream.IntStream
 import java.util.stream.Stream
 import kotlin.math.pow
@@ -9,17 +10,17 @@ import kotlin.math.pow
 class Executor(private val writer: Writer) {
     private val executingASTVisitor = ExecutingASTVisitor()
 
-    fun execute(ast: ASTNode, scope: Map<String, Eval> = mapOf()) : Map<String, Eval> {
-        return executingASTVisitor.visit(ast, ExecutionContext(scope, null, writer)).scope
+    fun execute(ast: ASTNode, scope: Map<String, Value> = mapOf()) : Map<String, Value> {
+        return executingASTVisitor.visit(ast, ExecutionContext(scope, writer)).scope
     }
 }
 
-sealed class Eval {
-    abstract fun binaryOperation(operator : BinaryOperator, other: Eval) : Eval
+sealed class Value {
+    abstract fun binaryOperation(operator : BinaryOperator, other: Value) : Value
     abstract fun print() : String
 
-    data class Float(val value : Double) : Eval() {
-        override fun binaryOperation(operator: BinaryOperator, other: Eval): Eval {
+    data class Float(val value : Double) : Value() {
+        override fun binaryOperation(operator: BinaryOperator, other: Value): Value {
             val otherValue = when (other) {
                 is Float -> other.value
                 is Integer -> other.value.toDouble()
@@ -47,8 +48,8 @@ sealed class Eval {
         }
 
     }
-    data class Integer(val value : Int) : Eval() {
-        override fun binaryOperation(operator: BinaryOperator, other: Eval): Eval {
+    data class Integer(val value : Int) : Value() {
+        override fun binaryOperation(operator: BinaryOperator, other: Value): Value {
             if (other is Float) {
                 return Float(value.toDouble()).binaryOperation(operator, other)
             }
@@ -77,9 +78,9 @@ sealed class Eval {
     data class Sequence(
         val lowerInclusive: Int,
         val upperInclusive: Int,
-        val mappedFunctions : List<(Eval) -> Eval>)
-    : Eval() {
-        override fun binaryOperation(operator: BinaryOperator, other: Eval): Eval {
+        val mappedFunctions : List<(Value) -> Value>)
+    : Value() {
+        override fun binaryOperation(operator: BinaryOperator, other: Value): Value {
             throw Exception()
         }
 
@@ -89,8 +90,8 @@ sealed class Eval {
             return "{ $trimmed }"
         }
 
-        fun buildStream(): Stream<Eval> {
-            val baseStream : Stream<Eval> =
+        fun buildStream(): Stream<Value> {
+            val baseStream : Stream<Value> =
                 IntStream.rangeClosed(lowerInclusive, upperInclusive).boxed().map { Integer(it) }
 
             val mappedStream = mappedFunctions.fold(baseStream) { stream, mappedFunction ->
@@ -103,27 +104,30 @@ sealed class Eval {
 }
 
 private data class ExecutionContext(
-    val scope : Map<String, Eval>,
-    val evaluationResult : Eval?,
+    val scope : Map<String, Value>,
     val writer: Writer
 )
 
-private class ExecutingASTVisitor : ASTVisitor<ExecutionContext> {
+private class ExecutingASTVisitor : ASTVisitor<ExecutionContext, Value>() {
     override fun onVariableDeclarationNodeVisited(
         variableDeclarationNode: VariableDeclarationNode,
         context: ExecutionContext
     ): ExecutionContext {
         return addLineNumberToExceptions(variableDeclarationNode) {
-            val (_, evaluationResult) = visit(variableDeclarationNode.expression, context)
-            context.copy(scope = context.scope + (variableDeclarationNode.identifier to evaluationResult!!))
+            val evaluationResult = visit(variableDeclarationNode.expression, context).second
+            context.copy(scope = context.scope + (variableDeclarationNode.identifier to evaluationResult))
         }
     }
 
     override fun onVariableAccessNodeVisited(
         variableAccessNode: VariableAccessNode,
         context: ExecutionContext
-    ): ExecutionContext {
-        return context.copy(evaluationResult = context.scope[variableAccessNode.identifier])
+    ): Pair<ExecutionContext, Value> {
+        val value = Optional
+            .ofNullable(context.scope[variableAccessNode.identifier])
+            .orElseThrow { Exception("access of undeclared variable") }
+
+        return Pair(context, value)
     }
 
     override fun onPrintExpressionNodeVisited(
@@ -131,7 +135,7 @@ private class ExecutingASTVisitor : ASTVisitor<ExecutionContext> {
         context: ExecutionContext
     ): ExecutionContext {
         return addLineNumberToExceptions(printExpressionNode) {
-            context.writer.write(visit(printExpressionNode.expression, context).evaluationResult!!.print())
+            context.writer.write(visit(printExpressionNode.expression, context).second.print())
             context.writer.flush()
             context
         }
@@ -146,39 +150,42 @@ private class ExecutingASTVisitor : ASTVisitor<ExecutionContext> {
         return context
     }
 
-    override fun onBinOpNodeVisited(binOpNode: BinOpNode, context: ExecutionContext): ExecutionContext {
-        val leftEvaluationResult = visit(binOpNode.left, context).evaluationResult!!
-        val rightEvaluationResult = visit(binOpNode.right, context).evaluationResult!!
+    override fun onBinOpNodeVisited(binOpNode: BinOpNode, context: ExecutionContext): Pair<ExecutionContext, Value> {
+        val leftEvaluationResult = visit(binOpNode.left, context).second
+        val rightEvaluationResult = visit(binOpNode.right, context).second
 
-        require(leftEvaluationResult !is Eval.Sequence && rightEvaluationResult !is Eval.Sequence)
+        require(leftEvaluationResult !is Value.Sequence && rightEvaluationResult !is Value.Sequence)
 
         val evaluationResult = leftEvaluationResult.binaryOperation(binOpNode.operator, rightEvaluationResult)
-        return context.copy(evaluationResult = evaluationResult)
+        return Pair(context, evaluationResult)
     }
 
-    override fun onMappingNodeVisited(mappingNode: MappingNode, context: ExecutionContext): ExecutionContext {
-        val sequenceEvaluationResult = visit(mappingNode.sequenceExpression, context).evaluationResult
+    override fun onMappingNodeVisited(mappingNode: MappingNode, context: ExecutionContext): Pair<ExecutionContext, Value> {
+        val sequenceEvaluationResult = visit(mappingNode.sequenceExpression, context).second
 
-        require(sequenceEvaluationResult is Eval.Sequence)
+        require(sequenceEvaluationResult is Value.Sequence)
 
         val evaluationFun = {
-            sequenceValue : Eval ->
+            sequenceValue : Value ->
             visit(
                 mappingNode.lambda.expression,
                 context.copy(scope = mapOf(mappingNode.lambda.identifier to sequenceValue))
-            ).evaluationResult!!
+            ).second
         }
 
-        return context.copy(evaluationResult = sequenceEvaluationResult.copy(
-            mappedFunctions = sequenceEvaluationResult.mappedFunctions + evaluationFun))
+        val newSequence = sequenceEvaluationResult.copy(
+            mappedFunctions = sequenceEvaluationResult.mappedFunctions + evaluationFun
+        )
+
+        return Pair(context, newSequence)
     }
 
-    override fun onReducingNodeVisited(reducingNode: ReducingNode, context: ExecutionContext): ExecutionContext {
-        val sequenceEvaluationResult = visit(reducingNode.sequenceExpression, context).evaluationResult
-        val neutralElementEvaluationResult = visit(reducingNode.neutralElementExpression, context).evaluationResult
+    override fun onReducingNodeVisited(reducingNode: ReducingNode, context: ExecutionContext): Pair<ExecutionContext, Value> {
+        val sequenceEvaluationResult = visit(reducingNode.sequenceExpression, context).second
+        val neutralElementEvaluationResult = visit(reducingNode.neutralElementExpression, context).second
 
-        require(sequenceEvaluationResult is Eval.Sequence)
-        require(neutralElementEvaluationResult !is Eval.Sequence)
+        require(sequenceEvaluationResult is Value.Sequence)
+        require(neutralElementEvaluationResult !is Value.Sequence)
 
         val evaluationResult = sequenceEvaluationResult.buildStream().reduce(neutralElementEvaluationResult)
         { x, y ->
@@ -190,24 +197,24 @@ private class ExecutingASTVisitor : ASTVisitor<ExecutionContext> {
                         (reducingNode.lambda.rightIdentifier to y),
                     )
                 )
-            ).evaluationResult!!
+            ).second
         }
 
-        return context.copy(evaluationResult = evaluationResult)
+        return Pair(context, evaluationResult)
     }
 
-    override fun onSequenceNodeVisited(sequenceNode: SequenceNode, context: ExecutionContext): ExecutionContext {
-        val lowerEvaluationResult = visit(sequenceNode.lowerBoundInclusive, context).evaluationResult
-        val upperEvaluationResult = visit(sequenceNode.upperBoundInclusive, context).evaluationResult
+    override fun onSequenceNodeVisited(sequenceNode: SequenceNode, context: ExecutionContext): Pair<ExecutionContext, Value> {
+        val lowerEvaluationResult = visit(sequenceNode.lowerBoundInclusive, context).second
+        val upperEvaluationResult = visit(sequenceNode.upperBoundInclusive, context).second
 
-        require(lowerEvaluationResult is Eval.Integer && upperEvaluationResult is Eval.Integer)
+        require(lowerEvaluationResult is Value.Integer && upperEvaluationResult is Value.Integer)
 
         if (upperEvaluationResult.value < lowerEvaluationResult.value) {
             throw InterpreterException("lower sequence boundary is higher than upper boundary")
         }
 
-        return context.copy(evaluationResult =
-            Eval.Sequence(
+        return Pair(context,
+            Value.Sequence(
                 lowerEvaluationResult.value,
                 upperEvaluationResult.value,
                 listOf()
@@ -217,14 +224,14 @@ private class ExecutingASTVisitor : ASTVisitor<ExecutionContext> {
     override fun onIntegerLiteralNodeVisited(
         integerLiteralNode: IntegerLiteralNode,
         context: ExecutionContext
-    ): ExecutionContext {
-        return context.copy(evaluationResult = Eval.Integer(integerLiteralNode.value))
+    ): Pair<ExecutionContext, Value> {
+        return Pair(context, Value.Integer(integerLiteralNode.value))
     }
 
     override fun onFloatLiteralNodeVisited(
         floatLiteralNode: FloatLiteralNode,
         context: ExecutionContext
-    ): ExecutionContext {
-        return context.copy(evaluationResult = Eval.Float(floatLiteralNode.value))
+    ): Pair<ExecutionContext, Value> {
+        return Pair(context, Value.Float(floatLiteralNode.value))
     }
 }

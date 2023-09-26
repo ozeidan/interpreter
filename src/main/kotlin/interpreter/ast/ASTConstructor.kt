@@ -32,70 +32,70 @@ private class ProgramNodeConstructingVisitor : SeqLangBaseVisitor<ASTNode>()  {
     }
 }
 
-private class StatementNodeConstructingVisitor : SeqLangBaseVisitor<StatementNode>() {
+private class StatementNodeConstructingVisitor : SeqLangBaseVisitor<ASTNode.Statement>() {
     private val expressionConstructor = ExpressionNodeConstructingVisitor()
 
-    override fun visitVarDeclaration(ctx: SeqLangParser.VarDeclarationContext): StatementNode {
+    override fun visitVarDeclaration(ctx: SeqLangParser.VarDeclarationContext): ASTNode.Statement {
         return VariableDeclarationNode(ctx.start.line, ctx.IDENT().text, expressionConstructor.visit(ctx.expr()))
     }
 
-    override fun visitPrintExpression(ctx: SeqLangParser.PrintExpressionContext): StatementNode {
+    override fun visitPrintExpression(ctx: SeqLangParser.PrintExpressionContext): ASTNode.Statement {
         return PrintExpressionNode(ctx.start.line, expressionConstructor.visit(ctx.expr()))
     }
 
-    override fun visitPrintString(ctx: SeqLangParser.PrintStringContext): StatementNode {
+    override fun visitPrintString(ctx: SeqLangParser.PrintStringContext): ASTNode.Statement {
         val text = ctx.STRING().text
         val trimmedText = text.substring(1, text.length - 1)
         return PrintStringNode(ctx.start.line, trimmedText)
     }
 }
 
-private class ExpressionNodeConstructingVisitor : SeqLangBaseVisitor<ExpressionNode>() {
-    override fun visitAddition(ctx: SeqLangParser.AdditionContext): ExpressionNode {
+private class ExpressionNodeConstructingVisitor : SeqLangBaseVisitor<ASTNode.Expression>() {
+    override fun visitAddition(ctx: SeqLangParser.AdditionContext): ASTNode.Expression {
         return BinOpNode(BinaryOperator.ADDITION, this.visit(ctx.addExpr()), this.visit(ctx.multExpr()))
     }
 
-    override fun visitSubtraction(ctx: SeqLangParser.SubtractionContext): ExpressionNode {
+    override fun visitSubtraction(ctx: SeqLangParser.SubtractionContext): ASTNode.Expression {
         return BinOpNode(BinaryOperator.SUBTRACTION, this.visit(ctx.addExpr()), this.visit(ctx.multExpr()))
     }
 
-    override fun visitMultiplication(ctx: SeqLangParser.MultiplicationContext): ExpressionNode {
+    override fun visitMultiplication(ctx: SeqLangParser.MultiplicationContext): ASTNode.Expression {
         return BinOpNode(BinaryOperator.MULTIPLICATION, this.visit(ctx.multExpr()), this.visit(ctx.powerExpr()))
     }
 
-    override fun visitDivision(ctx: SeqLangParser.DivisionContext): ExpressionNode {
+    override fun visitDivision(ctx: SeqLangParser.DivisionContext): ASTNode.Expression {
         return BinOpNode(BinaryOperator.DIVISION, this.visit(ctx.multExpr()), this.visit(ctx.powerExpr()))
     }
 
-    override fun visitPower(ctx: SeqLangParser.PowerContext): ExpressionNode {
+    override fun visitPower(ctx: SeqLangParser.PowerContext): ASTNode.Expression {
         return BinOpNode(BinaryOperator.POWER, this.visit(ctx.baseExpr()), this.visit(ctx.powerExpr()))
     }
 
-    override fun visitParenthesizedExpr(ctx: SeqLangParser.ParenthesizedExprContext): ExpressionNode {
+    override fun visitParenthesizedExpr(ctx: SeqLangParser.ParenthesizedExprContext): ASTNode.Expression {
         return this.visit(ctx.expr())
     }
 
-    override fun visitIdentifier(ctx: SeqLangParser.IdentifierContext): ExpressionNode {
+    override fun visitIdentifier(ctx: SeqLangParser.IdentifierContext): ASTNode.Expression {
         return VariableAccessNode(ctx.IDENT().text)
     }
 
-    override fun visitSequence(ctx: SeqLangParser.SequenceContext): ExpressionNode {
+    override fun visitSequence(ctx: SeqLangParser.SequenceContext): ASTNode.Expression {
         return SequenceNode(this.visit(ctx.expr(0)), this.visit(ctx.expr(1)))
     }
 
-    override fun visitFloatLiteral(ctx: SeqLangParser.FloatLiteralContext): ExpressionNode {
+    override fun visitFloatLiteral(ctx: SeqLangParser.FloatLiteralContext): ASTNode.Expression {
         return FloatLiteralNode(ctx.FLOAT().text.toDouble())
     }
 
-    override fun visitIntegerLiteral(ctx: SeqLangParser.IntegerLiteralContext): ExpressionNode {
+    override fun visitIntegerLiteral(ctx: SeqLangParser.IntegerLiteralContext): ASTNode.Expression {
         return IntegerLiteralNode(ctx.INTEGER().text.toInt())
     }
 
-    override fun visitMapping(ctx: SeqLangParser.MappingContext): ExpressionNode {
+    override fun visitMapping(ctx: SeqLangParser.MappingContext): ASTNode.Expression {
         return MappingNode(this.visit(ctx.expr(0)), UnaryLambda(ctx.IDENT().text, this.visit(ctx.expr(1))))
     }
 
-    override fun visitReduction(ctx: SeqLangParser.ReductionContext): ExpressionNode {
+    override fun visitReduction(ctx: SeqLangParser.ReductionContext): ASTNode.Expression {
         return ReducingNode(this.visit(ctx.expr(0)), this.visit(ctx.expr(1)),
             BinaryLambda(ctx.IDENT(0).text, ctx.IDENT(1).text, this.visit(ctx.expr(2))))
     }
