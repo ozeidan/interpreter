@@ -6,6 +6,7 @@ import interpreter.ast.ASTConstructor
 import org.antlr.v4.runtime.*
 import java.io.PrintWriter
 import java.io.Writer
+import java.util.concurrent.ForkJoinPool
 
 /**
  * Interpreter of SeqLang.
@@ -13,13 +14,14 @@ import java.io.Writer
  * @constructor Optionally takes a writer that the output of the interpreted programs is written to.
  * By default, the output is written to stdout.
  */
-class Interpreter(writer: Writer = PrintWriter(System.out)) : BaseErrorListener() {
+class Interpreter(writer: Writer = PrintWriter(System.out),
+                  forkJoinPool: ForkJoinPool = ForkJoinPool.commonPool()) : BaseErrorListener() {
     private var interpretedLines = 0
 
     private val semanticAnalyzer = SemanticAnalyzer()
     private var symbolTable : Map<String, Type> = mapOf()
 
-    private val executor = Executor(writer)
+    private val executor = Executor(writer, forkJoinPool)
     private var scope : Map<String, Value> = mapOf()
 
     private val errorListener = ErrorListener()

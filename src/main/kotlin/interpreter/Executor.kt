@@ -3,15 +3,22 @@ package interpreter
 import interpreter.ast.*
 import java.io.Writer
 import java.util.*
-import java.util.stream.IntStream
+import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.RecursiveTask
+import java.util.stream.Collectors
+import java.util.stream.LongStream
 import java.util.stream.Stream
 import kotlin.math.pow
 
-class Executor(private val writer: Writer) {
+class Executor(private val writer: Writer, private val forkJoinPool: ForkJoinPool) {
     private val executingASTVisitor = ExecutingASTVisitor()
 
     fun execute(ast: ASTNode, scope: Map<String, Value> = mapOf()) : Map<String, Value> {
-        return executingASTVisitor.visit(ast, ExecutionContext(scope, writer)).scope
+         return forkJoinPool.invoke(object : RecursiveTask<Map<String, Value>>() {
+            override fun compute() : Map<String, Value> {
+                return executingASTVisitor.visit(ast, ExecutionContext(scope, writer)).scope
+            }
+        })
     }
 }
 
@@ -113,6 +120,13 @@ private data class ExecutionContext(
 )
 
 private class ExecutingASTVisitor : ASTVisitor<ExecutionContext, Value>() {
+    private fun checkInterrupted() {
+        if (Thread.currentThread().isInterrupted) {
+            Thread.currentThread().interrupt()
+            throw InterruptedException()
+        }
+    }
+
     override fun onVariableDeclarationNodeVisited(
         variableDeclarationNode: VariableDeclarationNode,
         context: ExecutionContext
@@ -171,6 +185,7 @@ private class ExecutingASTVisitor : ASTVisitor<ExecutionContext, Value>() {
 
         val evaluationFun = {
             sequenceValue : Value ->
+            checkInterrupted()
             visit(
                 mappingNode.lambda.expression,
                 context.copy(scope = mapOf(mappingNode.lambda.identifier to sequenceValue))
@@ -191,8 +206,8 @@ private class ExecutingASTVisitor : ASTVisitor<ExecutionContext, Value>() {
         require(sequenceEvaluationResult is Value.Sequence)
         require(neutralElementEvaluationResult !is Value.Sequence)
 
-        val evaluationResult = sequenceEvaluationResult.buildStream().reduce(neutralElementEvaluationResult)
-        { x, y ->
+        val evaluationResult = sequenceEvaluationResult.buildStream().reduce(neutralElementEvaluationResult) { x, y ->
+            checkInterrupted()
             visit(
                 reducingNode.lambda.expression,
                 context.copy(
