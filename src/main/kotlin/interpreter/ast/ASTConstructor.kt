@@ -88,7 +88,7 @@ private class ExpressionNodeConstructingVisitor : SeqLangBaseVisitor<ASTNode.Exp
     }
 
     override fun visitIntegerLiteral(ctx: SeqLangParser.IntegerLiteralContext): ASTNode.Expression {
-        return IntegerLiteralNode(ctx.INTEGER().text.toInt())
+        return IntegerLiteralNode(ctx.INTEGER().text.toLong())
     }
 
     override fun visitMapping(ctx: SeqLangParser.MappingContext): ASTNode.Expression {

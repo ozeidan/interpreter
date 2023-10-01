@@ -48,7 +48,7 @@ sealed class Value {
         }
 
     }
-    data class Integer(val value : Int) : Value() {
+    data class Integer(val value : Long) : Value() {
         override fun binaryOperation(operator: BinaryOperator, other: Value): Value {
             if (other is Float) {
                 return Float(value.toDouble()).binaryOperation(operator, other)
@@ -62,12 +62,12 @@ sealed class Value {
                 BinaryOperator.SUBTRACTION -> Integer(value - otherValue)
                 BinaryOperator.MULTIPLICATION -> Integer(value * otherValue)
                 BinaryOperator.DIVISION -> {
-                    if (otherValue == 0) {
+                    if (otherValue == 0L) {
                         throw InterpreterException("attempted division by 0")
                     }
                     Float(value / otherValue.toDouble())
                 }
-                BinaryOperator.POWER -> Integer(value.toDouble().pow(other.value).toInt()) // TODO: way to avoid conversion?
+                BinaryOperator.POWER -> Integer(value.toDouble().pow(other.value.toDouble()).toLong()) // TODO: way to avoid conversion?
             }
         }
 
@@ -76,8 +76,8 @@ sealed class Value {
         }
     }
     data class Sequence(
-        val lowerInclusive: Int,
-        val upperInclusive: Int,
+        val lowerInclusive: Long,
+        val upperInclusive: Long,
         val mappedFunctions : List<(Value) -> Value>)
     : Value() {
         override fun binaryOperation(operator: BinaryOperator, other: Value): Value {
@@ -96,7 +96,7 @@ sealed class Value {
 
         fun buildStream(): Stream<Value> {
             val baseStream : Stream<Value> =
-                IntStream.rangeClosed(lowerInclusive, upperInclusive).boxed().map { Integer(it) }
+                LongStream.rangeClosed(lowerInclusive, upperInclusive).boxed().map { Integer(it) }
 
             val mappedStream = mappedFunctions.fold(baseStream) { stream, mappedFunction ->
                 stream.map { mappedFunction.invoke(it) }

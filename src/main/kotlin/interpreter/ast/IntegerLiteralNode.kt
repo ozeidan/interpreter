@@ -1,6 +1,6 @@
 package interpreter.ast
 
-data class IntegerLiteralNode(val value: Int) : ASTNode.Expression() {
+data class IntegerLiteralNode(val value: Long) : ASTNode.Expression() {
     override fun getChildren(): List<ASTNode> {
         return listOf()
     }
