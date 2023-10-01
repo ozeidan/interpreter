@@ -16,6 +16,7 @@ repositories {
 dependencies {
     antlr("org.antlr:antlr4:4.13.1")
     testImplementation(kotlin("test"))
+    implementation(files("libs/rsyntaxtextarea-3.3.6-SNAPSHOT.jar"))
 }
 
 tasks.generateGrammarSource {
