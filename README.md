@@ -11,6 +11,36 @@ stmt ::= var ident = expr | out expr | print "string"
 program ::= stmt | program stmt
 ```
 
+Here is an example program:
+```
+var n = 500
+var seq = map({0, n}, i -> (-1)^i / (2 * i + 1))
+var pi = 4 * reduce(seq, 0, x y -> x + y)
+print "pi = "
+out pi
+```
+The evaluation of sequences happens lazily, which allows for computations on very long sequences without running out of memory. The computations always happen in parallel, utilising all availables CPU cores.
+
+The IDE has basic editor features (syntax highlighting, highlighting of matching parantheses, etc.) and shows in-line error messages. The entered program always gets executed shortly after the user has finished entering it and the ouput gets shown in the panel below the editor. The program is also type-checked before execution which catches all type errors without having to run potentially long operations, enabling a faster feedback loop.
+
+## Running
+
+Currently I'm running the Main files from IntelliJ, there's one for the GUI and one for a REPL. Gradle tasks coming soon.
+
+## Usage
+
+Create a `Interpreter` instance and call `interpret` on it, passing your code as an argument. The output gets printed to stdout by default, or to a `java.io.Writer`, if one was passed to `Interpreter`s constructor. It's also possible to pass a custom `ForkJoinPool`, to limit the number of utilised CPU cores or to cancel a running computation (by calling `shutdownNow` on `ForkJoinPool`).
+
+## Utilised Libraries
+
+The lexer and parser were generated using [ANTLR](https://www.antlr.org/).
+The GUI is built with Java Swing. The editor is basd on a fork of [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea) I created that support virtual text for showing in-line error messages. The fork is included in this repo, packaged as a .jar file which gets included through gradle. I will upload the fork to Github soon but don't plan to get the changes merged as they are rather hacky and don't account for a bunch of editor features this project doesn't use.
+
+## Technical Overview
+
+ANTLR generates a lexer and parser, using the grammar in `src/main/antlr/SeqLang.g4`. At runtime, the `ASTConstructor` then traverses the parse tree created by the ANTLR parser, creating an AST (`ASTNode`). The AST can be easily traversed by subclassing `ASTVisitor`. This is done by the `SemanticAnalyzer` and the `Executor` to type check and finally execute the program at hand.
+
+# Outdated:
 ## Outline
 
 The repository will be structured as follows:
