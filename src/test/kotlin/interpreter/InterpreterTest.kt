@@ -153,6 +153,31 @@ class InterpreterTest {
         assertProgramOutput(program, "3")
     }
 
+    @Test
+    fun shouldAddFloatAndIntegerCorrectly() {
+        assertProgramOutput(
+            """
+            out 3.0 + 3
+        """.trimIndent(), "6.0"
+        )
+    }
+
+    @Test
+    fun shouldSubtractFloatFromFloatCorrectly() {
+        assertProgramOutput(
+            """
+            out 3.0 - 3.0
+        """.trimIndent(), "0.0"
+        )
+    }
+
+    @Test
+    fun shouldApplyPowerOperatorOnFloatCorrectly() {
+        assertProgramOutput("""
+            out 3.0 ^ 2
+        """.trimIndent(), "9.0")
+    }
+
 
     private fun assertProgramOutput(program: String, output: String) {
         toTest.interpret(program)
@@ -174,6 +199,16 @@ class InterpreterTest {
         assertThrows(
             """
             out 1 / 0
+            """.trimIndent(),
+            1
+        )
+    }
+
+    @Test
+    fun shouldThrowOnDivisionByFloatZero() {
+        assertThrows(
+            """
+            out 1 / (10 - 10.0)
             """.trimIndent(),
             1
         )

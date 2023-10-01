@@ -322,4 +322,49 @@ class SemanticAnalyzerTest {
 
         assertThrows<SeqLangException> { toTest.analyze(ast) }
     }
+
+    @Test
+    fun shouldThrowWhenMapLambdaEvaluatesToSequence() {
+        val ast =
+            ProgramNode(listOf(
+                PrintExpressionNode(1,
+                    MappingNode(
+                        SequenceNode(
+                            IntegerLiteralNode(1),
+                            IntegerLiteralNode(4)
+                        ),
+                        UnaryLambda("x",
+                            SequenceNode(
+                                VariableAccessNode("x"),
+                                IntegerLiteralNode(10)
+                            ))
+                    )
+                )
+            ))
+
+        assertThrows<SeqLangException> { toTest.analyze(ast) }
+    }
+
+    @Test
+    fun shouldThrowWhenReduceLambdaEvaluatesToSequence() {
+        val ast =
+            ProgramNode(listOf(
+                PrintExpressionNode(1,
+                    ReducingNode(
+                        SequenceNode(
+                            IntegerLiteralNode(1),
+                            IntegerLiteralNode(4)
+                        ),
+                        IntegerLiteralNode(1),
+                        BinaryLambda("x", "y",
+                            SequenceNode(
+                                VariableAccessNode("x"),
+                                IntegerLiteralNode(10)
+                            ))
+                    )
+                )
+            ))
+
+        assertThrows<SeqLangException> { toTest.analyze(ast) }
+    }
 }
