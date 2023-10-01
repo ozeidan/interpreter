@@ -45,4 +45,5 @@ IDENT: [a-zA-Z]+ ;
 INTEGER: '-'?[0-9]+ ;
 FLOAT: '-'?[0-9]+ ('.' [0-9]+)? ;
 STRING: '"' ~["\r\n]* '"' ;
-WS: [ \t\r\n]+ -> skip ;
+UNTERMINATED_STRING :  '"' ('\\' ["\\] | ~["\\\r\n])* ;
+WS: [ \t\r\n]+ -> channel(HIDDEN);
