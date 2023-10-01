@@ -85,9 +85,13 @@ sealed class Value {
         }
 
         override fun print(): String {
-            val middlePart = buildStream().map { "${it.print()}, " }.reduce("") { a, b -> a + b }
-            val trimmed = middlePart.substring(0, middlePart.length - 2)
-            return "{ $trimmed }"
+            val elementStrings = buildStream().limit(10).map { it.print() }
+
+            val allStrings = if (upperInclusive - lowerInclusive > 10)
+                Stream.concat(elementStrings, Stream.of("..."))
+            else elementStrings
+
+            return allStrings.collect(Collectors.joining(", ", "{ ", " }"))
         }
 
         fun buildStream(): Stream<Value> {

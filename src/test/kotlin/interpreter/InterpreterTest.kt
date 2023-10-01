@@ -74,6 +74,16 @@ class InterpreterTest {
     }
 
     @Test
+    fun shouldFormatLongSequenceCorrectly() {
+        val program = """
+            var seq = {1, 15}
+            out seq
+        """.trimIndent()
+
+        assertProgramOutput(program, "{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, ... }")
+    }
+
+    @Test
     fun shouldConvertSequenceToFloat() {
 
         val program = """
