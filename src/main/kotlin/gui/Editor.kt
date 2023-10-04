@@ -4,8 +4,7 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.DecreaseFontSizeAction
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.IncreaseFontSizeAction
 import org.fife.ui.rtextarea.RTextScrollPane
-import java.awt.BorderLayout
-import java.awt.Dimension
+import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
@@ -27,10 +26,10 @@ class Editor : JPanel() {
         editorArea.addKeyListener(InterpretationKeyListener(this))
 
         val editorScrollPane = RTextScrollPane(editorArea, true)
-        val outputScrollPane = JScrollPane(outputArea)
-        outputScrollPane.minimumSize = Dimension(20, 100)
+        outputArea.minimumSize = Dimension(20, 100)
         editorScrollPane.minimumSize = Dimension(20, 100)
-        val verticalSplit = JSplitPane(JSplitPane.VERTICAL_SPLIT, editorScrollPane, outputScrollPane)
+
+        val verticalSplit = JSplitPane(JSplitPane.VERTICAL_SPLIT, editorScrollPane, outputArea)
         verticalSplit.resizeWeight = 1.0
         add(verticalSplit)
     }
@@ -74,18 +73,23 @@ class Editor : JPanel() {
         val newWorker = InterpretationWorker(program) { result ->
             when (result) {
                 is InterpretationResult.Success -> {
-                    outputArea.text = result.output
+                    outputArea.setOutput(result.output)
                     editorArea.clearVirtualTexts()
                 }
 
-                is InterpretationResult.Error -> editorArea.virtualTexts =
-                    mapOf((result.lineNumber to result.error))
+                is InterpretationResult.Error -> {
+                    outputArea.setError()
+                    editorArea.virtualTexts =
+                        mapOf((result.lineNumber to result.error))
+                }
             }
         }
 
         interpretationWorker?.cancel(true)
         interpretationWorker = newWorker
         newWorker.execute()
+        editorArea.clearVirtualTexts()
+        outputArea.setExecuting()
     }
 
     private class InterpretationKeyListener(val editor: Editor) : KeyListener {
