@@ -69,6 +69,10 @@ class Editor : JPanel() {
         executeProgramAndShowResults(editorArea.text)
     }
 
+    fun getText() : String {
+        return editorArea.text
+    }
+
     private fun executeProgramAndShowResults(program: String) {
         val newWorker = InterpretationWorker(program) { result ->
             when (result) {
