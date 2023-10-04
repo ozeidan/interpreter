@@ -1,13 +1,11 @@
 package gui
 
 import SeqLangLexer
+import SeqLangLexer.*
 import org.antlr.v4.runtime.*
-import org.antlr.v4.runtime.atn.ATNConfigSet
-import org.antlr.v4.runtime.dfa.DFA
 import org.fife.ui.rsyntaxtextarea.AbstractTokenMaker
 import org.fife.ui.rsyntaxtextarea.Token
 import org.fife.ui.rsyntaxtextarea.TokenMap
-import java.util.*
 import javax.swing.text.Segment
 
 /**
@@ -18,16 +16,16 @@ class SeqLangTokenMaker : AbstractTokenMaker() {
     // has to match generated SeqLang.tokens file
     private fun mapTokenType(antlrTokenType: Int) : Int {
         val rSyntaxAreaTokenType = when (antlrTokenType) {
-            1, 3, 4 -> Token.RESERVED_WORD
-            15, 17 -> Token.FUNCTION
-            18 -> Token.IDENTIFIER
-            19 -> Token.LITERAL_NUMBER_DECIMAL_INT
-            20 -> Token.LITERAL_NUMBER_FLOAT
-            21 -> Token.LITERAL_STRING_DOUBLE_QUOTE
-            22 -> Token.ERROR_STRING_DOUBLE
-            23 -> Token.WHITESPACE
-            2, in 5..9, 13, 16 -> Token.OPERATOR
-            in 10..12, 14 -> Token.SEPARATOR
+            1, 3, 4 -> Token.RESERVED_WORD // var, print, out
+            15, 17 -> Token.FUNCTION // map, reduce
+            IDENT -> Token.IDENTIFIER
+            INTEGER -> Token.LITERAL_NUMBER_DECIMAL_INT
+            FLOAT -> Token.LITERAL_NUMBER_FLOAT
+            STRING -> Token.LITERAL_STRING_DOUBLE_QUOTE
+            UNTERMINATED_STRING -> Token.ERROR_STRING_DOUBLE
+            WS -> Token.WHITESPACE
+            2, in 5..9, 13, 16 -> Token.OPERATOR // =, operators, comma, ->
+            in 10..12, 14 -> Token.SEPARATOR // parens
             else -> {
                 throw RuntimeException()
             }
