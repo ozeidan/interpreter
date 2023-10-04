@@ -24,6 +24,7 @@ class Editor : JPanel() {
         layout = BorderLayout()
         editorArea.syntaxEditingStyle = "text/seqLang"
         editorArea.addKeyListener(InterpretationKeyListener(this))
+        editorArea.animateBracketMatching = false
 
         val editorScrollPane = RTextScrollPane(editorArea, true)
         outputArea.minimumSize = Dimension(20, 100)
