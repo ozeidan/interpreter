@@ -1,6 +1,6 @@
 # Interpreter
 
-This repository implements an interpreter and IDE for the language described by the following grammer in pseudo-BNF: 
+This repository implements an interpreter and IDE for the language described by the following grammar in pseudo-BNF: 
 
 ```
 expr ::= expr op expr | (expr) | ident | { expr, expr } |
@@ -19,22 +19,21 @@ var pi = 4 * reduce(seq, 0, x y -> x + y)
 print "pi = "
 out pi
 ```
-The evaluation of sequences happens lazily, which allows for computations on very long sequences without running out of memory. The computations always happen in parallel, utilising all availables CPU cores.
+The evaluation of sequences is lazy, allowing computations on very long sequences without running out of memory. Computations occur in parallel, utilizing all available CPU cores.
 
-The IDE has basic editor features (syntax highlighting, highlighting of matching parantheses, etc.) and shows in-line error messages. The entered program always gets executed shortly after the user has finished entering it and the ouput gets shown in the panel below the editor. The program is also type-checked before execution which catches all type errors without having to run potentially long operations, enabling a faster feedback loop.
+The IDE has basic editor features (syntax highlighting, matching parentheses highlighting, etc.) and shows inline error messages. The entered program executes shortly after the user finishes input, and the output appears below the editor. The program is also type-checked before execution, enabling a faster feedback loop.
 
 ## Running
 
-Currently I'm running the Main files from IntelliJ, there's one for the GUI and one for a REPL. Gradle tasks coming soon.
+Currently, I run the Main files from IntelliJ; one is for the GUI and another for a REPL. Gradle tasks are coming soon.
 
 ## Usage
 
-Create a `Interpreter` instance and call `interpret` on it, passing your code as an argument. The output gets printed to stdout by default, or to a `java.io.Writer`, if one was passed to `Interpreter`s constructor. It's also possible to pass a custom `ForkJoinPool`, to limit the number of utilised CPU cores or to cancel a running computation (by calling `shutdownNow` on `ForkJoinPool`).
+Create an Interpreter instance and call interpret on it, passing your code as an argument. Output prints to stdout by default, or to a `java.io.Writer` if one was passed to the Interpreter constructor. You can also pass a custom `ForkJoinPool `to limit CPU core usage or to cancel a running computation (by calling shutdownNow on `ForkJoinPool`).
 
 ## Utilised Libraries
 
-The lexer and parser were generated using [ANTLR](https://www.antlr.org/).
-The GUI is built with Java Swing. The editor is basd on a fork of [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea) I created that support virtual text for showing in-line error messages. The fork is included in this repo, packaged as a .jar file which gets included through gradle. I will upload the fork to Github soon but don't plan to get the changes merged as they are rather hacky and don't account for a bunch of editor features this project doesn't use.
+The lexer and parser are generated using [ANTLR](https://www.antlr.org/). The GUI uses Java Swing. The editor is based on my fork of [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea) that supports inline error messages. This fork is included in this repo and is packaged as a .jar file through Gradle. I plan to upload the fork to GitHub soon but don't plan on merging the changes, as they are rather hacky.
 
 ## Technical Overview
 
@@ -46,7 +45,7 @@ ANTLR generates a lexer and parser, using the grammar in `src/main/antlr/SeqLang
 The repository will be structured as follows:
 * Interpreter (20 estimated hours)
 
-    The various stages of interpretation handle and report errors appropriately, including the position in the input where the error occured.
+    The various stages of interpretation handle and report errors appropriately, including the position in the input where the error occurred.
     * Lexing and parsing
         
     * Semantic Analysis
@@ -54,7 +53,7 @@ The repository will be structured as follows:
         The AST is traversed before execution to catch some early type errors, for example operations with incorrect operand types
     * Interpretation
 
-        The given statments are executed and results are printed. The interpreter has the following properties:
+        The given statements are executed and results are printed. The interpreter has the following properties:
 
         * For testing purposes, the interpreter accepts a `java.io.Writer` and writes the output of the interpret program to it.
         * The interpreter lazily evaluates sequences. That means that creating or mapping a sequence does not immediately compute the values of the new sequence, but instead that happens once the values are needed: either when the sequence is printed via the `out` statement or when the sequence is reduced to a scalar value. Consecutive mappings on a sequence only construct a computational pipeline. This allows for sequences with a very large number of entries, since the interpreter doesn't need to hold all of the entries in memory, but can sequentially compute them as they are printed or combined in a reduction operation.
@@ -64,7 +63,7 @@ The repository will be structured as follows:
 
     The IDE allows the user to edit code of the language described above. After very change that the user makes, the IDE automatically interprets the code, displays the output in the output window and displays errors in the code editor if any occur.
     * Code Editor
-        * Syntax highting
+        * Syntax highlighting
         * Displaying of errors in place, next to the lines of code that caused them
     * Output Window
         * Displays the output of the script that's currently open in the text buffer
