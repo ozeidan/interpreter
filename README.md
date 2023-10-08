@@ -25,7 +25,8 @@ The IDE has basic editor features (syntax highlighting, matching parentheses hig
 
 ## Running
 
-Currently, I run the Main files from IntelliJ; one is for the GUI and another for a REPL. Gradle tasks are coming soon.
+Run `./gradlew run` to start the GUI. 
+Run `./gradlew runRepl` to start the CLI REPL. 
 
 ## Usage
 
