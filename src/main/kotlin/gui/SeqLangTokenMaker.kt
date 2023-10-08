@@ -38,6 +38,8 @@ class SeqLangTokenMaker : AbstractTokenMaker() {
         resetTokenList();
 
         val lexer = SeqLangLexer(CharStreams.fromString(text.toString()))
+        lexer.removeErrorListeners()
+
         val tokens = lexer.allTokens
 
         tokens.forEach {
