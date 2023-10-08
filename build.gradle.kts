@@ -36,10 +36,17 @@ tasks.test {
     useJUnitPlatform()
 }
 
+
 kotlin {
     jvmToolchain(19)
 }
 
 application {
     mainClass.set("gui.GuiMainKt")
+}
+
+tasks.register<JavaExec>("runRepl") {
+    mainClass = "ReplMainKt"
+    classpath = sourceSets["main"].runtimeClasspath
+    standardInput = System.`in`
 }
