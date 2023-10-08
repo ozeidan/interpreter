@@ -106,11 +106,3 @@ class RootPane : JFrame() {
         return interpreterMenu
     }
 }
-private fun setLookAndFeelIfExists(className: String, rootPane: Editor) {
-    if (!Arrays.stream(UIManager.getInstalledLookAndFeels()).anyMatch { it.name.equals(className) }) {
-        return
-    }
-
-    UIManager.setLookAndFeel(className);
-    SwingUtilities.updateComponentTreeUI(rootPane);
-}
