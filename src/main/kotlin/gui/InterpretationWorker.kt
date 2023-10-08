@@ -4,6 +4,7 @@ import interpreter.Interpreter
 import interpreter.SeqLangException
 import java.io.CharArrayWriter
 import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.RecursiveTask
 import javax.swing.SwingWorker
 
 sealed class InterpretationResult {
@@ -18,14 +19,18 @@ class InterpretationWorker(
     private val forkJoinPool = ForkJoinPool(Runtime.getRuntime().availableProcessors() - 1)
 
     override fun doInBackground(): InterpretationResult {
-        val charArrayWriter = CharArrayWriter()
-        val interpreter = Interpreter(charArrayWriter, forkJoinPool)
-        return try {
-            interpreter.interpret(program)
-            InterpretationResult.Success(charArrayWriter.toString())
-        } catch (e: SeqLangException) {
-            InterpretationResult.Error(e)
-        }
+        return forkJoinPool.invoke(object : RecursiveTask<InterpretationResult>() {
+            override fun compute() : InterpretationResult {
+                val charArrayWriter = CharArrayWriter()
+                val interpreter = Interpreter(charArrayWriter)
+                return try {
+                    interpreter.interpret(program)
+                    InterpretationResult.Success(charArrayWriter.toString())
+                } catch (e: SeqLangException) {
+                    InterpretationResult.Error(e)
+                }
+            }
+        })
     }
 
     override fun done() {

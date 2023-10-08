@@ -3,22 +3,16 @@ package interpreter
 import interpreter.ast.*
 import java.io.Writer
 import java.util.*
-import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.RecursiveTask
 import java.util.stream.Collectors
 import java.util.stream.LongStream
 import java.util.stream.Stream
 import kotlin.math.pow
 
-class Executor(private val writer: Writer, private val forkJoinPool: ForkJoinPool) {
+class Executor(private val writer: Writer) {
     private val executingASTVisitor = ExecutingASTVisitor()
 
     fun execute(ast: ASTNode, scope: Map<String, Value> = mapOf()) : Map<String, Value> {
-         return forkJoinPool.invoke(object : RecursiveTask<Map<String, Value>>() {
-            override fun compute() : Map<String, Value> {
-                return executingASTVisitor.visit(ast, ExecutionContext(scope, writer)).scope
-            }
-        })
+        return executingASTVisitor.visit(ast, ExecutionContext(scope, writer)).scope
     }
 }
 

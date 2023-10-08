@@ -14,14 +14,13 @@ import java.util.concurrent.ForkJoinPool
  * @constructor Optionally takes a writer that the output of the interpreted programs is written to.
  * By default, the output is written to stdout.
  */
-class Interpreter(writer: Writer = PrintWriter(System.out),
-                  forkJoinPool: ForkJoinPool = ForkJoinPool.commonPool()) : BaseErrorListener() {
+class Interpreter(writer: Writer = PrintWriter(System.out)) : BaseErrorListener() {
     private var interpretedLines = 0
 
     private val semanticAnalyzer = SemanticAnalyzer()
     private var symbolTable : Map<String, Type> = mapOf()
 
-    private val executor = Executor(writer, forkJoinPool)
+    private val executor = Executor(writer)
     private var scope : Map<String, Value> = mapOf()
 
     private val errorListener = ErrorListener()
@@ -51,9 +50,9 @@ class Interpreter(writer: Writer = PrintWriter(System.out),
         parser.removeErrorListeners()
         parser.addErrorListener(errorListener)
 
-        val tree = parser.program()
+        val parseTree = parser.program()
 
-        val ast = ASTConstructor().constructAST(tree)
+        val ast = ASTConstructor().constructAST(parseTree)
 
         try {
             val newSymbolTable = semanticAnalyzer.analyze(ast, symbolTable)
