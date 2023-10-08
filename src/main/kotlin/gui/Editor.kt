@@ -67,14 +67,14 @@ class Editor : JPanel() {
         editorArea.setCaretPosition(0)
         editorArea.discardAllEdits()
         editorArea.clearVirtualTexts()
-        executeProgramAndShowResults(editorArea.text)
+        executeProgramAndShowOutput(editorArea.text)
     }
 
     fun getText() : String {
         return editorArea.text
     }
 
-    private fun executeProgramAndShowResults(program: String) {
+    private fun executeProgramAndShowOutput(program: String) {
         val newWorker = InterpretationWorker(program) { result ->
             when (result) {
                 is InterpretationResult.Success -> {
@@ -83,9 +83,9 @@ class Editor : JPanel() {
                 }
 
                 is InterpretationResult.Error -> {
-                    outputArea.setError()
+                    outputArea.setError(result.error.toString())
                     editorArea.virtualTexts =
-                        mapOf((result.lineNumber to result.error))
+                        mapOf((result.error.lineNumber - 1 to result.error.message))
                 }
             }
         }
@@ -101,7 +101,7 @@ class Editor : JPanel() {
         private val interpretationDebouncer = Debouncer(500)
 
         override fun keyTyped(e: KeyEvent) {
-            interpretationDebouncer.debounce { editor.executeProgramAndShowResults(editor.editorArea.text) }
+            interpretationDebouncer.debounce { editor.executeProgramAndShowOutput(editor.editorArea.text) }
         }
 
         override fun keyPressed(e: KeyEvent?) {

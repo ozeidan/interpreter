@@ -62,7 +62,7 @@ class Interpreter(writer: Writer = PrintWriter(System.out),
             this.scope = newScope
         } catch (e : SeqLangException) {
             // TODO: could do error handling via the listener pattern to have symmetry with lexer + parser
-            throw SeqLangException(e.message, e.lineNumber + interpretedLines)
+            throw SeqLangException(e.message!!, e.lineNumber + interpretedLines)
         }
     }
 }

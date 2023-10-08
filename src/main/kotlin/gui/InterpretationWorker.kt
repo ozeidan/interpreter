@@ -8,7 +8,7 @@ import javax.swing.SwingWorker
 
 sealed class InterpretationResult {
     data class Success(val output: String) : InterpretationResult()
-    data class Error(val error: String, val lineNumber: Int) : InterpretationResult()
+    data class Error(val error: SeqLangException) : InterpretationResult()
 }
 
 class InterpretationWorker(
@@ -24,7 +24,7 @@ class InterpretationWorker(
             interpreter.interpret(program)
             InterpretationResult.Success(charArrayWriter.toString())
         } catch (e: SeqLangException) {
-            InterpretationResult.Error(e.message, e.lineNumber - 1)
+            InterpretationResult.Error(e)
         }
     }
 
