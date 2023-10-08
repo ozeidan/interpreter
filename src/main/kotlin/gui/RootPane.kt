@@ -40,6 +40,12 @@ class RootPane : JFrame() {
 
     private fun createMenuBar() : JMenuBar {
         val menuBar = JMenuBar()
+        menuBar.add(createFileMenu())
+        menuBar.add(createInterpreterMenu())
+        return menuBar
+    }
+
+    private fun createFileMenu() : JMenu {
         val fileMenu = JMenu("File")
         val openFileItem = JMenuItem("Open...")
         val saveFileAsItem = JMenuItem("Save As...")
@@ -68,13 +74,36 @@ class RootPane : JFrame() {
             }
         }
 
-        menuBar.add(fileMenu)
         fileMenu.add(openFileItem)
 
         saveFileItem.isEnabled = false
         fileMenu.add(saveFileItem)
         fileMenu.add(saveFileAsItem)
-        return menuBar
+        return fileMenu
+    }
+
+    private fun createInterpreterMenu() : JMenu {
+        val interpreterMenu = JMenu("Interpreter")
+        val executeCodeItem = JMenuItem("Execute Code")
+        val automaticExecutionItem = JCheckBoxMenuItem("Automatic Execution")
+        automaticExecutionItem.state = true
+
+        executeCodeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
+        automaticExecutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E,
+            ActionEvent.CTRL_MASK or ActionEvent.SHIFT_MASK));
+
+        executeCodeItem.addActionListener {
+            editor.execute()
+        }
+
+        automaticExecutionItem.addActionListener {
+            editor.executeAutomatically = automaticExecutionItem.state
+        }
+
+        interpreterMenu.add(executeCodeItem)
+        interpreterMenu.add(automaticExecutionItem)
+
+        return interpreterMenu
     }
 }
 private fun setLookAndFeelIfExists(className: String, rootPane: Editor) {

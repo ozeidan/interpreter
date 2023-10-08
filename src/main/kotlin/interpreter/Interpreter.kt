@@ -35,6 +35,10 @@ class Interpreter(writer: Writer = PrintWriter(System.out),
      * thrown on a consecutive call, the line number will be relative to all statements that were passed to the interpreter.
      */
     fun interpret(statements: String) {
+        if (statements.isBlank()) {
+            return
+        }
+
         val input = CharStreams.fromString(statements)
 
         val lexer = SeqLangLexer(input)

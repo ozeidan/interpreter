@@ -15,6 +15,7 @@ import javax.swing.*
 
 
 class Editor : JPanel() {
+    var executeAutomatically = true
     private val editorArea: RSyntaxTextArea = createTextArea()
     private val outputArea = OutputArea()
 
@@ -67,12 +68,20 @@ class Editor : JPanel() {
         editorArea.setCaretPosition(0)
         editorArea.discardAllEdits()
         editorArea.clearVirtualTexts()
-        executeProgramAndShowOutput(editorArea.text)
+
+        if (executeAutomatically) {
+            execute()
+        }
     }
 
     fun getText() : String {
         return editorArea.text
     }
+
+    fun execute() {
+        executeProgramAndShowOutput(editorArea.text)
+    }
+
 
     private fun executeProgramAndShowOutput(program: String) {
         val newWorker = InterpretationWorker(program) { result ->
@@ -101,6 +110,10 @@ class Editor : JPanel() {
         private val interpretationDebouncer = Debouncer(500)
 
         override fun keyTyped(e: KeyEvent) {
+            if (!editor.executeAutomatically) {
+                return
+            }
+
             interpretationDebouncer.debounce { editor.executeProgramAndShowOutput(editor.editorArea.text) }
         }
 
