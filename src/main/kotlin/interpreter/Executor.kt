@@ -79,7 +79,7 @@ sealed class Value {
     data class Sequence(
         val lowerInclusive: Long,
         val upperInclusive: Long,
-        val mappedFunctions : List<(Value) -> Value>)
+        val mappings : List<(Value) -> Value>)
     : Value() {
         override fun binaryOperation(operator: BinaryOperator, other: Value): Value {
             throw Exception()
@@ -99,8 +99,8 @@ sealed class Value {
             val baseStream : Stream<Value> =
                 LongStream.rangeClosed(lowerInclusive, upperInclusive).boxed().map { Integer(it) }
 
-            val mappedStream = mappedFunctions.fold(baseStream) { stream, mappedFunction ->
-                stream.map { mappedFunction.invoke(it) }
+            val mappedStream = mappings.fold(baseStream) { stream, mapping ->
+                stream.map { mapping.invoke(it) }
             }
 
             return mappedStream.parallel()
@@ -187,7 +187,7 @@ private class ExecutingASTVisitor : ASTVisitor<ExecutionContext, Value>() {
         }
 
         val newSequence = sequenceEvaluationResult.copy(
-            mappedFunctions = sequenceEvaluationResult.mappedFunctions + evaluationFun
+            mappings = sequenceEvaluationResult.mappings + evaluationFun
         )
 
         return Pair(context, newSequence)

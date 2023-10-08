@@ -198,7 +198,7 @@ class InterpreterTest {
     fun shouldThrowOnDivisionByZero() {
         assertThrows(
             """
-            out 1 / 0
+            out 1 / (10 - 10)
             """.trimIndent(),
             1
         )

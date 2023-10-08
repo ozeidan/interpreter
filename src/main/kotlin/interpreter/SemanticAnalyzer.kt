@@ -172,7 +172,7 @@ private class TypeCheckingASTVisitor() : ASTVisitor<SymbolTable, Type>() {
     ): Pair<SymbolTable, Type> {
         val variableType = Optional
             .ofNullable(context[variableAccessNode.identifier])
-            .orElseThrow { InterpreterException("access of undeclared variable") }
+            .orElseThrow { InterpreterException("access of undeclared variable ${variableAccessNode.identifier}") }
 
         return Pair(context, variableType)
     }
